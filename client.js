@@ -5,6 +5,9 @@ import { XRButton } from "three/addons/webxr/XRButton.js";
 import { ARButton } from "/ARButton.js";
 import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+
+import { io } from "https://cdn.socket.io/4.7.5/socket.io.esm.min.js"; // Import socket.io client
 
 import { BoxGeometry, Matrix4, Mesh, MeshBasicMaterial, Object3D } from "three";
 
@@ -71,6 +74,9 @@ let planeGroup = new THREE.Group();
 planeGroup.name = "Plane Group";
 let occlusionGroup = new THREE.Group();
 occlusionGroup.name = "Occlusion Group";
+
+// Establish Socket.IO connection
+const socket = io();
 
 ////////////////////////////////////////
 //// MODIFICATIONS FROM THREEJS EXAMPLE
@@ -1281,7 +1287,8 @@ function dollyMove() {
           old.buttons[4] == 0 &&
           data.handedness == "left"
         ) {
-          // calibrationMode = !calibrationMode;
+          // X button (button 4 on left controller)
+          // Toggle visibility of mesh and related groups
           meshGroup.visible = !meshGroup.visible;
           lineGroup.visible = !lineGroup.visible;
           planeGroup.visible = !planeGroup.visible;
@@ -1291,10 +1298,22 @@ function dollyMove() {
           old.buttons[5] == 0 &&
           data.handedness == "left"
         ) {
+          // Y button (button 5 on left controller)
+          // Export the scene as JSON
           meshGroup.visible = true;
           lineGroup.visible = true;
           planeGroup.visible = true;
           exportScene();
+        }
+        // Add new button handling for STL export
+        if (
+          data.buttons[5] == 1 &&
+          old.buttons[5] == 0 &&
+          data.handedness == "right"
+        ) {
+          // B button (button 5 on right controller)
+          // Export the scene as STL
+          exportSceneSTL();
         }
 
         if (old) {
@@ -1578,6 +1597,9 @@ function saveScene(event) {
         }
 
         saveString(output, "scene.json");
+        // Send JSON data to server
+        socket.emit('saveFileToServer', { type: 'json', filename: 'scene.json', data: output });
+
 
         let outputRef = baseReferenceSpace;
 
@@ -1841,6 +1863,9 @@ function exportScene() {
   }
 
   saveString(output, "scene.json");
+  // Send JSON data to server
+  socket.emit('saveFileToServer', { type: 'json', filename: 'scene.json', data: output });
+
 
   let outputRef = baseReferenceSpace;
 
@@ -1854,6 +1879,202 @@ function exportScene() {
   // saveString(outputRef, "referenceSpace.json");
 }
 
+// New function to export scene as STL
+function exportSceneSTL() {
+  console.log("Exporting scene as STL...");
+  
+  // Create a new STL exporter
+  const exporter = new STLExporter();
+  
+  // Create a temporary group to hold only the meshes we want to export
+  const exportGroup = new THREE.Group();
+  
+  // Clone and add furniture meshes to the export group
+  scene.traverse((object) => {
+    // Only export actual meshes with geometry that are furniture or planes
+    if (object.isMesh && object.geometry && 
+       (object.name === "Furniture" || object.name === "Plane" || 
+        object.name === "Wireframe Mesh")) {
+      
+      // Clone the mesh to avoid modifying the original
+      const clonedMesh = object.clone();
+      exportGroup.add(clonedMesh);
+    }
+  });
+  
+  // Generate the STL binary data
+  const result = exporter.parse(exportGroup, { binary: true });
+  
+  // Create a download link for the STL file
+  const blob = new Blob([result], { type: 'application/octet-stream' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'scene.stl';
+  link.click();
+
+  // Send STL data to server
+  socket.emit('saveFileToServer', { type: 'stl', filename: 'scene.stl', data: blob });
+
+  // Clean up
+  URL.revokeObjectURL(link.href);
+  console.log("STL export complete");
+}
+
+// Function to create a mesh from detected geometry
+// addMeshDetectionPhysics - This function creates 3D meshes from detected real-world objects
+function addMeshDetectionPhysics(data) {
+  // Check if the geometry is a simple box shape
+  if (data.geometry.type == "BoxGeometry") {
+    // Calculate half dimensions for the box
+    const x = data.width / 2;
+    const y = data.length / 2;
+    const z = data.height / 2;
+
+    // Create a semi-transparent red material for visualization
+    const material = new THREE.MeshLambertMaterial({
+      color: 0xff0000,
+      transparent: true,
+      opacity: 0.8,
+    });
+
+    // Create a buffer geometry for the box
+    const geometry = new THREE.BufferGeometry();
+
+    // Define vertices for the box (8 corners)
+    const vertices = new Float32Array([
+      // front face vertices
+      -x, -y, z,  // bottom-left-front
+      x, -y, z,   // bottom-right-front
+      x, y, z,    // top-right-front
+      -x, y, z,   // top-left-front
+      // back face vertices
+      -x, -y, -z, // bottom-left-back
+      -x, y, -z,  // top-left-back
+      x, y, -z,   // top-right-back
+      x, -y, -z,  // bottom-right-back
+    ]);
+
+    // Define indices for the triangles (12 triangles, 2 per face of the box)
+    const indices = new Uint16Array([
+      0, 1, 2, 0, 2, 3,     // front face (2 triangles)
+      4, 5, 6, 4, 6, 7,     // back face
+      3, 2, 6, 3, 6, 5,     // top face
+      0, 4, 7, 0, 7, 1,     // bottom face
+      1, 7, 6, 1, 6, 2,     // right face
+      0, 3, 5, 0, 5, 4,     // left face
+    ]);
+
+    // Define normals for proper lighting
+    const normals = new Float32Array([
+      // front face normals
+      0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+      // back face normals
+      0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+    ]);
+
+    // Add attributes to the buffer geometry
+    geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
+    geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+    geometry.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
+
+    // Create a mesh with the geometry and material
+    const mesh = new THREE.Mesh(geometry, material);
+    
+    // Set position and rotation from the provided matrix
+    mesh.position.setFromMatrixPosition(data.matrix);
+    mesh.quaternion.setFromRotationMatrix(data.matrix);
+    mesh.name = "Furniture";
+    meshGroup.add(mesh);
+
+    // Create wireframe edges for better visualization
+    const edges = new THREE.EdgesGeometry(geometry);
+    const line = new THREE.LineSegments(
+      edges,
+      new THREE.LineBasicMaterial({ color: 0xffffff })
+    );
+    line.position.setFromMatrixPosition(data.matrix);
+    line.quaternion.setFromRotationMatrix(data.matrix);
+    lineGroup.add(line);
+
+    // Get the center point for physics calculations
+    var centerMesh = getCenterPoint(mesh);
+
+    // Create a physics representation of the box
+    const geometryPhysics = new THREE.BoxGeometry(
+      data.width,
+      data.length,
+      data.height
+    );
+
+    const meshPhysics = new THREE.Mesh(geometryPhysics, material);
+    meshPhysics.position.setFromMatrixPosition(data.matrix);
+    meshPhysics.quaternion.setFromRotationMatrix(data.matrix);
+    
+    // Add the mesh to the physics engine if physics is enabled
+    if (enablePhysics) {
+      physics.addMesh(meshPhysics);
+    }
+  }
+  // Handle more complex buffer geometries (detailed meshes)
+  else if (data.geometry.type == "BufferGeometry") {
+    // Extract vertices and indices from the detected mesh
+    const vertices = new Float32Array(data.vertices);
+    const indices = new Uint32Array(data.indices);
+    
+    // Create a proper Three.js geometry from the raw data
+    const geometry = createGeometry(vertices, indices);
+    
+    // Create an invisible material for occlusion (hides what's behind the mesh)
+    const material = new THREE.MeshLambertMaterial({
+      colorWrite: false,  // Don't render color (invisible)
+      renderOrder: 2,     // Render priority
+    });
+
+    // Create a wireframe material for visualization
+    let material2 = new THREE.MeshBasicMaterial({
+      wireframe: true,
+    });
+    
+    // Create a shadow material to show shadows on the mesh
+    const material3 = new THREE.ShadowMaterial({
+      color: 0x444444,
+      transparent: true,
+      opacity: 0.6,
+      renderOrder: 3,
+    });
+
+    // Create three different representations of the same mesh for different purposes
+    
+    // 1. Occlusion mesh - invisible but blocks rendering of objects behind it
+    const occlusionMesh = new THREE.Mesh(geometry, material);
+    occlusionMesh.position.setFromMatrixPosition(data.matrix);
+    occlusionMesh.quaternion.setFromRotationMatrix(data.matrix);
+    occlusionMesh.name = "Occlusion Mesh";
+    
+    // 2. Wireframe mesh - shows the structure of the mesh
+    const wireframeMesh = new THREE.Mesh(geometry, material2);
+    wireframeMesh.position.setFromMatrixPosition(data.matrix);
+    wireframeMesh.quaternion.setFromRotationMatrix(data.matrix);
+    wireframeMesh.name = "Wireframe Mesh";
+    
+    // 3. Shadow mesh - receives shadows to give depth cues
+    const shadowMesh = new THREE.Mesh(geometry, material3);
+    shadowMesh.position.setFromMatrixPosition(data.matrix);
+    shadowMesh.quaternion.setFromRotationMatrix(data.matrix);
+    shadowMesh.receiveShadow = true;
+    shadowMesh.name = "Shadow Mesh";
+    
+    // Add the meshes to the scene
+    scene.add(shadowMesh);
+    occlusionGroup.add(occlusionMesh);
+    meshGroup.add(wireframeMesh);
+    
+    // Add physics to the wireframe mesh
+    physics.addMesh(wireframeMesh);
+  }
+}
+
+// ...existing code...
 function cloneScene(originalScene) {
   const clonedScene = new THREE.Scene();
 
