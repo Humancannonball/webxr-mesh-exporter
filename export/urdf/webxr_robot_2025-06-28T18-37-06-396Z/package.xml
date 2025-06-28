@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>webxr_robot</name>
+  <version>1.0.0</version>
+  <description>URDF model exported from WebXR Mesh Exporter</description>
+  
+  <maintainer email="user@example.com">WebXR User</maintainer>
+  <license>MIT</license>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <depend>urdf</depend>
+  <depend>xacro</depend>
+  
+  <export>
+  </export>
+</package>

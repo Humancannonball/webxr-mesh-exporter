@@ -20,6 +20,10 @@ let physics,
 let ar;
 let vr;
 
+// Socket.io connection
+let socket = null;
+let urdfExporter = null;
+
 /////////////////
 //   Rapier   //
 ////////////////
@@ -237,6 +241,150 @@ class XRPlanes extends Object3D {
 
 init();
 await initPhysics();
+
+// Initialize optional features after core functionality
+setTimeout(() => {
+  initSocket();
+  initUrdfExporter();
+}, 1000);
+
+///////////////////////////////
+//  Socket.io Connection     //
+///////////////////////////////
+
+function initSocket() {
+  // Initialize socket connection - check if io is available
+  try {
+    if (typeof io !== 'undefined') {
+      socket = io();
+      
+      socket.on('connect', () => {
+        console.log('Connected to server with socket ID:', socket.id);
+      });
+
+      socket.on('disconnect', () => {
+        console.log('Disconnected from server');
+      });
+
+      socket.on('urdf-export-complete', (data) => {
+        if (data.success) {
+          console.log(`URDF export successful: ${data.robotName}`);
+          alert(`URDF export successful! Robot: ${data.robotName}\nSaved to server at: ${data.exportPath}`);
+        } else {
+          console.error(`URDF export failed: ${data.error}`);
+          alert(`URDF export failed: ${data.error}`);
+        }
+      });
+
+      socket.on('scene-export-complete', (data) => {
+        if (data.success) {
+          console.log(`Scene export successful: ${data.filename}`);
+          alert(`Scene export successful! File: ${data.filename}`);
+        } else {
+          console.error(`Scene export failed: ${data.error}`);
+          alert(`Scene export failed: ${data.error}`);
+        }
+      });
+    } else {
+      console.warn('Socket.io not available, running in offline mode');
+    }
+  } catch (error) {
+    console.warn('Failed to initialize socket connection:', error);
+    socket = null;
+  }
+}
+
+///////////////////////////////
+//  URDF Exporter Setup      //
+///////////////////////////////
+
+async function initUrdfExporter() {
+  try {
+    // Dynamically import UrdfExporter to avoid blocking main app
+    const { UrdfExporter } = await import('/UrdfExporter.js');
+    urdfExporter = new UrdfExporter(socket);
+    console.log('URDF Exporter initialized successfully');
+  } catch (error) {
+    console.warn('Failed to initialize URDF exporter:', error);
+    urdfExporter = null;
+  }
+}
+
+// Enhanced export scene function with server support
+function exportSceneToServer() {
+  if (!socket) {
+    console.warn('No socket connection, falling back to local export');
+    exportScene();
+    return;
+  }
+
+  // Clone and clean the scene
+  const clonedScene = cloneScene(scene);
+  
+  // Remove controllers, UI elements, etc.
+  if (spheres) {
+    clonedScene.remove(spheres);
+  }
+  if (controller) {
+    clonedScene.remove(controller);
+  }
+  if (controller1) {
+    clonedScene.remove(controller1);
+  }
+  if (controller2) {
+    clonedScene.remove(controller2);
+  }
+  if (controllerGrip1) {
+    clonedScene.remove(controllerGrip1);
+  }
+  if (controllerGrip2) {
+    clonedScene.remove(controllerGrip2);
+  }
+  if (lineGroup) {
+    clonedScene.remove(lineGroup);
+  }
+  if (reticle) {
+    clonedScene.remove(reticle);
+  }
+
+  // Remove user cubes
+  const session = renderer.xr.getSession();
+  var userID;
+  if (session) {
+    userID = userArray[0].id;
+  } else {
+    userID = userArray[1]?.id;
+  }
+  
+  if (userID) {
+    var con1 = "controller1";
+    var con2 = "controller2";
+    var dataCon1 = userID.concat(con1);
+    var dataCon2 = userID.concat(con2);
+    var cube = clonedScene.getObjectByName(userID);
+    var cubeCon1 = clonedScene.getObjectByName(dataCon1);
+    var cubeCon2 = clonedScene.getObjectByName(dataCon2);
+    if (cube) clonedScene.remove(cube);
+    if (cubeCon1) clonedScene.remove(cubeCon1);
+    if (cubeCon2) clonedScene.remove(cubeCon2);
+  }
+
+  let output = clonedScene.toJSON();
+
+  try {
+    output = JSON.stringify(output, null, "\t");
+    output = output.replace(/[\n\t]+([\d\.e\-\[\]]+)/g, "$1");
+  } catch (e) {
+    output = JSON.stringify(output);
+  }
+
+  // Send to server
+  socket.emit('scene-export', {
+    scene: JSON.parse(output),
+    referenceSpace: baseReferenceSpace,
+    timestamp: Date.now()
+  });
+}
 
 ///////////////////////////////
 //  Start init() for scene  //
@@ -1294,7 +1442,25 @@ function dollyMove() {
           meshGroup.visible = true;
           lineGroup.visible = true;
           planeGroup.visible = true;
-          exportScene();
+          // Export to URDF using the URDF exporter
+          if (urdfExporter) {
+            const robotName = 'webxr_robot_' + Date.now();
+            if (socket) {
+              urdfExporter.exportAndSendToServer(scene, robotName, {
+                removeControllers: true,
+                removeBalls: true,
+                removeUI: true,
+                baseLink: "base_link"
+              });
+            } else {
+              urdfExporter.exportAndDownload(scene, robotName, {
+                removeControllers: true,
+                removeBalls: true,
+                removeUI: true,
+                baseLink: "base_link"
+              });
+            }
+          }
         }
 
         if (old) {
@@ -1590,6 +1756,33 @@ function saveScene(event) {
 
         // saveString(outputRef, "referenceSpace.json");
 
+        break;
+      
+      case "u":
+        // URDF export using the URDF exporter
+        if (urdfExporter) {
+          const robotName = prompt('Enter robot name:', 'webxr_robot') || 'webxr_robot';
+          if (socket) {
+            urdfExporter.exportAndSendToServer(scene, robotName, {
+              removeControllers: true,
+              removeBalls: true,
+              removeUI: true,
+              baseLink: "base_link"
+            });
+          } else {
+            urdfExporter.exportAndDownload(scene, robotName, {
+              removeControllers: true,
+              removeBalls: true,
+              removeUI: true,
+              baseLink: "base_link"
+            });
+          }
+        }
+        break;
+        
+      case "j":
+        // Export to server (JSON)
+        exportSceneToServer();
         break;
     }
   }

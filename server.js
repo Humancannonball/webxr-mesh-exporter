@@ -5,6 +5,7 @@ const http = require("http");
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
+const fs = require('fs').promises;
 
 let clock = Date.now();
 
@@ -18,6 +19,21 @@ let clients = 0; //Count the number of users connected to the server
 let userArray = [];
 let planeArray = [];
 let meshArray = [];
+
+// Ensure export directories exist
+async function ensureExportDirs() {
+  try {
+    await fs.mkdir(path.join(__dirname, 'export'), { recursive: true });
+    await fs.mkdir(path.join(__dirname, 'export/json'), { recursive: true });
+    await fs.mkdir(path.join(__dirname, 'export/stl'), { recursive: true });
+    await fs.mkdir(path.join(__dirname, 'export/urdf'), { recursive: true });
+  } catch (error) {
+    console.error('Error creating export directories:', error);
+  }
+}
+
+// Initialize export directories
+ensureExportDirs();
 
 ////////////////////////
 // Socket Connection //
@@ -200,6 +216,104 @@ io.sockets.on("connection", (socket) => {
   socket.on("addMesh-detected", function (data) {
     socket.broadcast.emit("addMesh-detectedFromServer", data);
     //meshArray.push(data);
+  });
+
+  // Handle URDF export from client
+  socket.on("urdf-export", async function (data) {
+    console.log(`Received URDF export from ${socket.id}: ${data.robotName}`);
+    
+    try {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const exportDir = path.join(__dirname, 'export/urdf', `${data.robotName}_${timestamp}`);
+      
+      // Create robot-specific directory
+      await fs.mkdir(exportDir, { recursive: true });
+      await fs.mkdir(path.join(exportDir, 'urdf'), { recursive: true });
+      await fs.mkdir(path.join(exportDir, 'meshes'), { recursive: true });
+      
+      // Save URDF file
+      await fs.writeFile(
+        path.join(exportDir, 'urdf', `${data.robotName}.urdf`), 
+        data.urdf, 
+        'utf8'
+      );
+      
+      // Save package.xml
+      await fs.writeFile(
+        path.join(exportDir, 'package.xml'), 
+        data.package.packageXml, 
+        'utf8'
+      );
+      
+      // Save CMakeLists.txt
+      await fs.writeFile(
+        path.join(exportDir, 'CMakeLists.txt'), 
+        data.package.cmakeLists, 
+        'utf8'
+      );
+      
+      // Save mesh files
+      for (const mesh of data.package.meshes) {
+        await fs.writeFile(
+          path.join(exportDir, 'meshes', mesh.filename), 
+          mesh.content, 
+          'utf8'
+        );
+      }
+      
+      console.log(`URDF package saved: ${exportDir}`);
+      
+      // Notify client of successful save
+      socket.emit("urdf-export-complete", {
+        success: true,
+        robotName: data.robotName,
+        exportPath: exportDir,
+        timestamp: data.timestamp
+      });
+      
+    } catch (error) {
+      console.error('Error saving URDF export:', error);
+      socket.emit("urdf-export-complete", {
+        success: false,
+        error: error.message,
+        robotName: data.robotName,
+        timestamp: data.timestamp
+      });
+    }
+  });
+
+  // Handle JSON scene export
+  socket.on("scene-export", async function (data) {
+    console.log(`Received scene export from ${socket.id}`);
+    
+    try {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const filename = `scene_${timestamp}.json`;
+      const filePath = path.join(__dirname, 'export/json', filename);
+      
+      await fs.writeFile(filePath, JSON.stringify(data.scene, null, 2), 'utf8');
+      
+      if (data.referenceSpace) {
+        const refFilename = `reference_space_${timestamp}.json`;
+        const refFilePath = path.join(__dirname, 'export/json', refFilename);
+        await fs.writeFile(refFilePath, JSON.stringify(data.referenceSpace, null, 2), 'utf8');
+      }
+      
+      console.log(`Scene exported: ${filePath}`);
+      
+      socket.emit("scene-export-complete", {
+        success: true,
+        filename: filename,
+        timestamp: timestamp
+      });
+      
+    } catch (error) {
+      console.error('Error saving scene export:', error);
+      socket.emit("scene-export-complete", {
+        success: false,
+        error: error.message
+      });
+    }
   });
 });
 
