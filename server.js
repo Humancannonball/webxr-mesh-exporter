@@ -5,17 +5,8 @@ const http = require("http");
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
-const fs = require('fs'); // Require the file system module
 
 let clock = Date.now();
-
-// Define export directories
-const jsonExportDir = path.join(__dirname, 'export', 'json');
-const stlExportDir = path.join(__dirname, 'export', 'stl');
-
-// Create export directories if they don't exist
-fs.mkdirSync(jsonExportDir, { recursive: true });
-fs.mkdirSync(stlExportDir, { recursive: true });
 
 app.use(express.static(__dirname + "/"));
 
@@ -209,34 +200,6 @@ io.sockets.on("connection", (socket) => {
   socket.on("addMesh-detected", function (data) {
     socket.broadcast.emit("addMesh-detectedFromServer", data);
     //meshArray.push(data);
-  });
-
-  // Listen for file save requests from clients
-  socket.on('saveFileToServer', (fileInfo) => {
-    const { type, filename, data } = fileInfo;
-    let targetDir;
-    let fileData;
-
-    if (type === 'json') {
-      targetDir = jsonExportDir;
-      fileData = data; // JSON data is a string
-    } else if (type === 'stl') {
-      targetDir = stlExportDir;
-      fileData = Buffer.from(data); // STL data is a Blob/ArrayBuffer, convert to Buffer
-    } else {
-      console.error(`Unsupported file type received: ${type}`);
-      return; // Ignore unsupported types
-    }
-
-    const filePath = path.join(targetDir, filename);
-
-    fs.writeFile(filePath, fileData, (err) => {
-      if (err) {
-        console.error(`Error saving ${type} file to server:`, err);
-      } else {
-        console.log(`${type.toUpperCase()} file saved to server: ${filePath}`);
-      }
-    });
   });
 });
 

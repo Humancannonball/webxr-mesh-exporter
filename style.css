@@ -4,13 +4,13 @@
 html, body {
   margin: 0;
   overflow: hidden;
-  background-color: orange !important; /* Added orange background to body for testing */
 }
 
 canvas {
   width: 100%;
   height: 100%;
 }
+
 
 #count {
     position: absolute;
@@ -43,7 +43,6 @@ canvas {
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background-color: rgb(101, 102, 106) !important; /* Added !important for testing */
 	opacity: 1;
  	transition: 1s opacity;
 }
@@ -52,6 +51,8 @@ canvas {
     opacity: 0;
 }
 
+
+}
 @-webkit-keyframes spin {
     0%   {
         -webkit-transform: rotate(0deg);
