@@ -44,6 +44,7 @@ if (location.protocol != 'https:')
  location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
 }
 </script>
+    <script src="/socket.io/socket.io.js"></script>
     <script type="module" src="client.js"></script>
 	</body>
 </html>

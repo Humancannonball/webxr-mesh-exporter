@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const path = require("path");
 const http = require("http");
+const fs = require("fs");
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
@@ -200,6 +201,43 @@ io.sockets.on("connection", (socket) => {
   socket.on("addMesh-detected", function (data) {
     socket.broadcast.emit("addMesh-detectedFromServer", data);
     //meshArray.push(data);
+  });
+
+  socket.on("sceneExport", function (data) {
+    console.log("Received scene export from client:", socket.id);
+    console.log("Export timestamp:", new Date(data.timestamp).toISOString());
+    console.log("Scene data size:", data.sceneData.length, "characters");
+    
+    // Create exports directory if it doesn't exist
+    const exportsDir = path.join(__dirname, 'exports');
+    if (!fs.existsSync(exportsDir)) {
+      fs.mkdirSync(exportsDir);
+    }
+    
+    // Create filename with timestamp and client ID
+    const timestamp = new Date(data.timestamp).toISOString().replace(/[:.]/g, '-');
+    const clientId = socket.id.substring(0, 8); // Use first 8 chars of socket ID
+    const sceneFilename = `scene_${timestamp}_${clientId}.json`;
+    const refSpaceFilename = `referenceSpace_${timestamp}_${clientId}.json`;
+    
+    // Save scene data to file
+    const sceneFilePath = path.join(exportsDir, sceneFilename);
+    fs.writeFileSync(sceneFilePath, data.sceneData, 'utf8');
+    console.log("Scene saved to:", sceneFilePath);
+    
+    // Save reference space data if it exists
+    if (data.referenceSpace) {
+      const refSpaceFilePath = path.join(exportsDir, refSpaceFilename);
+      fs.writeFileSync(refSpaceFilePath, data.referenceSpace, 'utf8');
+      console.log("Reference space saved to:", refSpaceFilePath);
+    }
+    
+    // Optionally broadcast to other clients that a scene was exported
+    socket.broadcast.emit("sceneExportNotification", {
+      clientId: socket.id,
+      timestamp: data.timestamp,
+      filename: sceneFilename
+    });
   });
 });
 

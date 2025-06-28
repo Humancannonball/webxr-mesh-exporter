@@ -8,6 +8,22 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 import { BoxGeometry, Matrix4, Mesh, MeshBasicMaterial, Object3D } from "three";
 
+// Socket.io connection
+const socket = io();
+
+// Socket connection event handlers
+socket.on('connect', () => {
+  console.log('Connected to server with ID:', socket.id);
+});
+
+socket.on('disconnect', () => {
+  console.log('Disconnected from server');
+});
+
+socket.on('sceneExportNotification', (data) => {
+  console.log('Another client exported a scene:', data);
+});
+
 let enablePhysics = true;
 
 let camera, scene, renderer;
@@ -1840,8 +1856,6 @@ function exportScene() {
     output = JSON.stringify(output);
   }
 
-  saveString(output, "scene.json");
-
   let outputRef = baseReferenceSpace;
 
   try {
@@ -1850,6 +1864,18 @@ function exportScene() {
   } catch (e) {
     outputRef = JSON.stringify(outputRef);
   }
+
+  saveString(output, "scene.json");
+
+  // Send the JSON data to the server automatically
+  const sceneExportData = {
+    timestamp: Date.now(),
+    sceneData: output,
+    referenceSpace: outputRef
+  };
+  
+  socket.emit('sceneExport', sceneExportData);
+  console.log('Scene JSON sent to server automatically');
 
   // saveString(outputRef, "referenceSpace.json");
 }
