@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8">
-		<title>Mesh Export Tool</title>
+		<title>Mixed Reality Robot Programming Platform</title>
     	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 	<meta name="mobile-web-app-capable" content="yes">
@@ -16,18 +16,26 @@
     <section id="loading-screen">
 
 	<div id="loader"></div>
-        <div id="title">Quest 3 - Ballshooter / Mesh Export Tool</div>
+        <div id="title">Mixed Reality Robot Programming</div>
       <div id="count">
-Step 1: Use Scene Setup Tool on Quest 3
-(Settings -> Physical Space -> Space Setup -> Set Up)<br>
-Step 2: Set a Boundary
-(Settings -> Physical Space -> Boundary)<br>
-Step 3: Load Website and Select "Start AR"
-(https://jasonharron.github.io)<br>
-Step 4: Have fun!<br>
-Controls: Main triggers = Shoot balls, X = Hide Room, Y = Export Room to JSON
-(Exported rooms can be sent via e-mail [attach from Download folder] and viewed in the ThreeJS Editor.).<br>
-(NOTE: Also works on Quest 1 with Walls and Quest 2/Pro with Walls+Furniture)
+🤖 Mixed Reality Interface for Mobile Robot Programming 🥽
+
+📡 ROOM SCAN ACQUISITION TOOL 📡
+This web interface captures and uploads 3D environment data from Meta Quest 3
+
+✅ Step 1: Scan Your Environment
+Put on Meta Quest 3 and scan the room using built-in sensors
+
+✅ Step 2: Upload to Server
+Room scan data is transmitted to our processing server via this interface
+
+✅ Step 3: 3D Model Processing  
+Server converts your scan to URDF format for ROS2/Gazebo simulation
+
+🎯 Perfect for: TurtleBot, educational robotics, rapid prototyping
+🔧 Powered by: ROS2, Gazebo, Nav2, WebXR technology
+
+Controls: Trigger = Test AR, X = Toggle environment, Y = Export scan to server
 </div>
 </section>
     <script type="importmap">
