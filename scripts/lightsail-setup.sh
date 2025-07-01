@@ -44,36 +44,36 @@ mkdir -p data/export/json
 echo "🌍 Creating production environment file..."
 cat > .env << EOF
 NODE_ENV=production
-PORT=3000
+PORT=80
 EOF
 
 # Make scripts executable
 echo "🔐 Making scripts executable..."
-chmod +x scripts/update.sh scripts/setup-dns.sh
+chmod +x scripts/update.sh scripts/setup-dns.sh scripts/pm2-manage.sh
 
 # Configure Apache virtual host
 echo "🌐 Configuring Apache virtual host..."
 sudo cp apache/webxr-mesh-exporter.conf /opt/bitnami/apache/conf/vhosts/webxr-mesh-exporter.conf
 
-# Enable required Apache modules
+# Disable Apache on port 80 since Node.js will run directly on port 80
+echo "🔧 Configuring Apache to not conflict with Node.js on port 80..."
+sudo sed -i 's/Listen 80/#Listen 80/' /opt/bitnami/apache/conf/httpd.conf || true
+
+# Enable required Apache modules for HTTPS only
 echo "🔧 Enabling Apache modules..."
-sudo a2enmod rewrite
-sudo a2enmod proxy
-sudo a2enmod proxy_http
-sudo a2enmod proxy_wstunnel
 sudo a2enmod ssl
 
-# Start the application with PM2
-echo "🚀 Starting application with PM2..."
-pm2 start config/ecosystem.config.js --env production
+# Start the application with PM2 (requires sudo for port 80)
+echo "🚀 Starting application with PM2 on port 80..."
+sudo pm2 start config/ecosystem.config.js --env production
 
 # Save PM2 configuration
 echo "💾 Saving PM2 configuration..."
-pm2 save
+sudo pm2 save
 
 # Setup PM2 to start on boot
 echo "🔄 Setting up PM2 to start on boot..."
-pm2 startup | tail -1 | sudo bash
+sudo pm2 startup | tail -1 | sudo bash
 
 # Restart Apache to apply configuration
 echo "🔄 Restarting Apache..."
@@ -85,10 +85,10 @@ cat > status-check.sh << 'EOF'
 #!/bin/bash
 echo "=== WebXR Mesh Exporter Status ==="
 echo "PM2 Status:"
-pm2 status
+sudo pm2 status
 echo ""
 echo "Application Health:"
-curl -s http://localhost:3000/health | python3 -m json.tool
+curl -s http://localhost/health | python3 -m json.tool
 echo ""
 echo "Apache Status:"
 sudo /opt/bitnami/ctlscript.sh status apache
@@ -109,10 +109,11 @@ echo "   HTTP:  http://$(curl -s http://169.254.169.254/latest/meta-data/public-
 echo "   HTTPS: https://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)"
 echo ""
 echo "🔧 Useful commands:"
-echo "   pm2 status                    - Check application status"
-echo "   pm2 logs webxr-mesh-exporter  - View application logs"
-echo "   pm2 restart webxr-mesh-exporter - Restart application"
-echo "   ./status-check.sh             - Run comprehensive status check"
+echo "   sudo pm2 status                    - Check application status"
+echo "   sudo pm2 logs webxr-mesh-exporter  - View application logs"
+echo "   sudo pm2 restart webxr-mesh-exporter - Restart application"
+echo "   ./scripts/pm2-manage.sh status     - Convenient PM2 management"
+echo "   ./status-check.sh                  - Run comprehensive status check"
 echo ""
 echo "🌐 To set up a custom domain:"
 echo "   1. Point your domain's A record to this server's IP"
