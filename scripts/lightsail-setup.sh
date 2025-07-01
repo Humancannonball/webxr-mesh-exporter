@@ -47,70 +47,13 @@ NODE_ENV=production
 PORT=3000
 EOF
 
-# Make update script executable
-echo "🔐 Making update script executable..."
-chmod +x scripts/update.sh
+# Make scripts executable
+echo "🔐 Making scripts executable..."
+chmod +x scripts/update.sh scripts/setup-dns.sh
 
 # Configure Apache virtual host
 echo "🌐 Configuring Apache virtual host..."
-sudo tee /opt/bitnami/apache/conf/vhosts/webxr-mesh-exporter.conf > /dev/null << EOF
-<VirtualHost *:80>
-    ServerName localhost
-    DocumentRoot /opt/bitnami/projects/webxr-mesh-exporter
-    
-    # Proxy WebSocket connections
-    ProxyPreserveHost On
-    ProxyRequests Off
-    
-    # WebSocket proxy
-    ProxyPass /socket.io/ ws://localhost:3000/socket.io/
-    ProxyPassReverse /socket.io/ ws://localhost:3000/socket.io/
-    
-    # HTTP proxy for everything else
-    ProxyPass / http://localhost:3000/
-    ProxyPassReverse / http://localhost:3000/
-    
-    # Enable WebSocket upgrade
-    RewriteEngine On
-    RewriteCond %{HTTP:Upgrade} websocket [NC]
-    RewriteCond %{HTTP:Connection} upgrade [NC]
-    RewriteRule ^/?(.*) "ws://localhost:3000/\$1" [P,L]
-    
-    ErrorLog /opt/bitnami/apache/logs/webxr_error.log
-    CustomLog /opt/bitnami/apache/logs/webxr_access.log combined
-</VirtualHost>
-
-<VirtualHost *:443>
-    ServerName localhost
-    DocumentRoot /opt/bitnami/projects/webxr-mesh-exporter
-    
-    # SSL Configuration
-    SSLEngine on
-    SSLCertificateFile /opt/bitnami/apache/conf/bitnami/certs/server.crt
-    SSLCertificateKeyFile /opt/bitnami/apache/conf/bitnami/certs/server.key
-    
-    # Proxy WebSocket connections
-    ProxyPreserveHost On
-    ProxyRequests Off
-    
-    # WebSocket proxy
-    ProxyPass /socket.io/ ws://localhost:3000/socket.io/
-    ProxyPassReverse /socket.io/ ws://localhost:3000/socket.io/
-    
-    # HTTP proxy for everything else
-    ProxyPass / http://localhost:3000/
-    ProxyPassReverse / http://localhost:3000/
-    
-    # Enable WebSocket upgrade
-    RewriteEngine On
-    RewriteCond %{HTTP:Upgrade} websocket [NC]
-    RewriteCond %{HTTP:Connection} upgrade [NC]
-    RewriteRule ^/?(.*) "ws://localhost:3000/\$1" [P,L]
-    
-    ErrorLog /opt/bitnami/apache/logs/webxr_ssl_error.log
-    CustomLog /opt/bitnami/apache/logs/webxr_ssl_access.log combined
-</VirtualHost>
-EOF
+sudo cp apache/webxr-mesh-exporter.conf /opt/bitnami/apache/conf/vhosts/webxr-mesh-exporter.conf
 
 # Enable required Apache modules
 echo "🔧 Enabling Apache modules..."
@@ -171,4 +114,10 @@ echo "   pm2 logs webxr-mesh-exporter  - View application logs"
 echo "   pm2 restart webxr-mesh-exporter - Restart application"
 echo "   ./status-check.sh             - Run comprehensive status check"
 echo ""
-echo "📚 For SSL setup with custom domain, run: sudo /opt/bitnami/bncert-tool"
+echo "🌐 To set up a custom domain:"
+echo "   1. Point your domain's A record to this server's IP"
+echo "   2. Wait for DNS propagation"
+echo "   3. Run: ./scripts/setup-dns.sh yourdomain.com"
+echo ""
+echo "🔒 For SSL setup after domain configuration:"
+echo "   sudo /opt/bitnami/bncert-tool"

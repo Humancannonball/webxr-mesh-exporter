@@ -20,12 +20,30 @@ A WebXR-based application for capturing and exporting 3D environment data from M
 
 ## AWS Lightsail Deployment
 
+### Step 1: Basic Setup
+
 1. **Create a new AWS Lightsail instance** with "Node.js Packaged by Bitnami"
 2. **Instance Size**: Minimum 1 GB RAM (2 GB recommended)
 3. **Launch Script**: Copy and paste the content of `scripts/lightsail-setup.sh` into the launch script field
 4. **Networking**: Ensure ports 80 (HTTP) and 443 (HTTPS) are open in the firewall
 
-After deployment, access your application at `http://your-instance-ip` or `https://your-instance-ip`
+After deployment, your application will be accessible at `http://your-instance-ip`
+
+### Step 2: Custom Domain Setup (Optional)
+
+If you want to use your own domain:
+
+1. **Configure DNS**: Point your domain's A record to your Lightsail instance IP
+2. **Wait for propagation**: DNS changes can take up to 24 hours
+3. **Run DNS setup**: SSH into your instance and run:
+   ```bash
+   cd /opt/bitnami/projects/webxr-mesh-exporter
+   ./scripts/setup-dns.sh yourdomain.com
+   ```
+4. **Set up SSL**: After domain is working, run:
+   ```bash
+   sudo /opt/bitnami/bncert-tool
+   ```
 
 ## Usage
 
@@ -49,6 +67,9 @@ pm2 restart webxr-mesh-exporter
 
 # Update application from GitHub
 ./scripts/update.sh
+
+# Set up custom domain (after DNS is configured)
+./scripts/setup-dns.sh yourdomain.com
 
 # Manual update process
 cd /opt/bitnami/projects/webxr-mesh-exporter
@@ -86,8 +107,12 @@ webxr-mesh-exporter/
 ├── config/                       # Configuration files
 │   ├── ecosystem.config.js       # PM2 process configuration
 │   └── .env.example              # Environment variables template
+├── apache/                       # Apache configuration files
+│   ├── webxr-mesh-exporter.conf  # Default Apache virtual host
+│   └── webxr-mesh-exporter-domain.conf # Domain-specific template
 ├── scripts/                      # Deployment and utility scripts
 │   ├── lightsail-setup.sh        # AWS Lightsail automated setup
+│   ├── setup-dns.sh              # Custom domain configuration
 │   └── update.sh                 # Application update script
 ├── data/                         # Application data (excluded from git)
 │   ├── export/                   # Exported scene data
