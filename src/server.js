@@ -5,14 +5,49 @@ const http = require("http");
 const fs = require("fs");
 const server = http.createServer(app);
 const { Server } = require("socket.io");
-const io = new Server(server);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.NODE_ENV === 'production' ? false : ["http://localhost:3000", "http://127.0.0.1:3000"],
+    methods: ["GET", "POST"]
+  }
+});
+
+// Environment configuration
+const PORT = process.env.PORT || 3000;
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
 let clock = Date.now();
 
-app.use(express.static(__dirname + "/"));
+// Middleware for security and parsing
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Serve static files
+app.use(express.static(path.join(__dirname, "public")));
+
+// Security headers for production
+if (NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    next();
+  });
+}
 
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/index.html");
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Health check endpoint for AWS
+app.get("/health", (req, res) => {
+  res.status(200).json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: NODE_ENV
+  });
 });
 
 let clients = 0; //Count the number of users connected to the server
@@ -209,9 +244,9 @@ io.sockets.on("connection", (socket) => {
     console.log("Scene data size:", data.sceneData.length, "characters");
     
     // Create exports directory if it doesn't exist
-    const exportsDir = path.join(__dirname, 'exports');
+    const exportsDir = path.join(__dirname, '..', 'data', 'export', 'json');
     if (!fs.existsSync(exportsDir)) {
-      fs.mkdirSync(exportsDir);
+      fs.mkdirSync(exportsDir, { recursive: true });
     }
     
     // Create filename with timestamp and client ID
@@ -220,24 +255,29 @@ io.sockets.on("connection", (socket) => {
     const sceneFilename = `scene_${timestamp}_${clientId}.json`;
     const refSpaceFilename = `referenceSpace_${timestamp}_${clientId}.json`;
     
-    // Save scene data to file
-    const sceneFilePath = path.join(exportsDir, sceneFilename);
-    fs.writeFileSync(sceneFilePath, data.sceneData, 'utf8');
-    console.log("Scene saved to:", sceneFilePath);
-    
-    // Save reference space data if it exists
-    if (data.referenceSpace) {
-      const refSpaceFilePath = path.join(exportsDir, refSpaceFilename);
-      fs.writeFileSync(refSpaceFilePath, data.referenceSpace, 'utf8');
-      console.log("Reference space saved to:", refSpaceFilePath);
+    try {
+      // Save scene data to file
+      const sceneFilePath = path.join(exportsDir, sceneFilename);
+      fs.writeFileSync(sceneFilePath, data.sceneData, 'utf8');
+      console.log("Scene saved to:", sceneFilePath);
+      
+      // Save reference space data if it exists
+      if (data.referenceSpace) {
+        const refSpaceFilePath = path.join(exportsDir, refSpaceFilename);
+        fs.writeFileSync(refSpaceFilePath, data.referenceSpace, 'utf8');
+        console.log("Reference space saved to:", refSpaceFilePath);
+      }
+      
+      // Optionally broadcast to other clients that a scene was exported
+      socket.broadcast.emit("sceneExportNotification", {
+        clientId: socket.id,
+        timestamp: data.timestamp,
+        filename: sceneFilename
+      });
+    } catch (error) {
+      console.error("Error saving scene export:", error);
+      socket.emit("sceneExportError", { message: "Failed to save scene export" });
     }
-    
-    // Optionally broadcast to other clients that a scene was exported
-    socket.broadcast.emit("sceneExportNotification", {
-      clientId: socket.id,
-      timestamp: data.timestamp,
-      filename: sceneFilename
-    });
   });
 });
 
@@ -245,8 +285,27 @@ io.sockets.on("connection", (socket) => {
 //  Listen to the socket port  //
 ////////////////////////////////
 
-server.listen(3000, () => {
-  console.log("listening on *:3000");
+server.listen(PORT, () => {
+  console.log(`Mixed Reality Robot Programming Platform listening on port ${PORT}`);
+  console.log(`Environment: ${NODE_ENV}`);
+  console.log(`Server started at: ${new Date().toISOString()}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
 });
 
 /////////////////////////

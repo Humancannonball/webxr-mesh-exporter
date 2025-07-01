@@ -1,14 +1,33 @@
 {
-  "main": "/public/index.html",
+  "name": "webxr-mesh-exporter",
+  "version": "1.0.0",
+  "description": "Mixed Reality Robot Programming Platform - WebXR mesh and plane export tool for AWS deployment",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node src/server.js",
+    "dev": "NODE_ENV=development node src/server.js",
+    "prod": "NODE_ENV=production node src/server.js",
+    "pm2:start": "pm2 start config/ecosystem.config.js",
+    "pm2:stop": "pm2 stop config/ecosystem.config.js",
+    "pm2:restart": "pm2 restart config/ecosystem.config.js",
+    "pm2:delete": "pm2 delete config/ecosystem.config.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "socket.io": "^4.7.1",
-    "three": "^0.155.0"
+    "socket.io": "^4.7.1"
   },
   "engines": {
-    "node": "16.x"
-  }
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "webxr",
+    "mixed-reality",
+    "robotics",
+    "mesh-export",
+    "aws",
+    "lightsail"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
 }

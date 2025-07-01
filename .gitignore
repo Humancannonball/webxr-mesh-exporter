@@ -1,2 +1,26 @@
-node_modules
-exports
+# Dependencies
+node_modules/
+npm-debug.log*
+
+# Environment variables
+.env
+
+# Application data
+data/logs/
+data/export/
+
+# Temporary files
+*.tmp
+*.swp
+.DS_Store
+
+# PM2
+.pm2/
+
+# IDE files
+.vscode/
+.idea/
+
+# Build files
+dist/
+build/
