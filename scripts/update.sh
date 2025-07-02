@@ -18,41 +18,6 @@ fi
 
 cd $APP_DIR
 
-# Function to migrate from port 3000 to port 80
-migrate_to_port_80() {
-    echo "🔄 Migrating from port 3000 to port 80..."
-    
-    # Stop current application
-    sudo pm2 stop $APP_NAME 2>/dev/null || pm2 stop $APP_NAME 2>/dev/null || true
-    
-    # Disable Apache on port 80
-    echo "🔧 Configuring Apache to not conflict with Node.js on port 80..."
-    sudo sed -i 's/Listen 80/#Listen 80/' /opt/bitnami/apache/conf/httpd.conf || true
-    
-    # Update environment file
-    echo "🌍 Updating environment file..."
-    cat > .env << EOF
-NODE_ENV=production
-PORT=80
-EOF
-    
-    # Restart Apache to apply changes
-    echo "🔄 Restarting Apache..."
-    sudo /opt/bitnami/ctlscript.sh restart apache || true
-    
-    # Start application with new configuration
-    echo "🚀 Starting application on port 80..."
-    sudo pm2 start config/ecosystem.config.js --env production
-    sudo pm2 save
-    
-    echo "✅ Migration to port 80 completed!"
-}
-
-# Check if this is a migration from port 3000 to port 80
-if [ -f ".env" ] && grep -q "PORT=3000" .env; then
-    migrate_to_port_80
-fi
-
 # Check if git repo exists
 if [ ! -d ".git" ]; then
     echo "❌ Not a git repository. Please check your installation."

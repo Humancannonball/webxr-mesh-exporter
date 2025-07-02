@@ -1,58 +1,286 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<title>Mixed Reality Robot Programming Platform</title>
-    	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-	<meta name="mobile-web-app-capable" content="yes">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-	<link type="text/css" rel="stylesheet" href="style.css">
-		<style>
-			body { margin: 0; }
-		</style>
-	</head>
-	<body>
-    <section id="loading-screen">
-
-	<div id="loader"></div>
-        <div id="title">Mixed Reality Robot Programming</div>
-      <div id="count">
-🤖 Mixed Reality Interface for Mobile Robot Programming 🥽
-
-📡 ROOM SCAN ACQUISITION TOOL 📡
-This web interface captures and uploads 3D environment data from Meta Quest 3
-
-✅ Step 1: Scan Your Environment
-Put on Meta Quest 3 and scan the room using built-in sensors
-
-✅ Step 2: Upload to Server
-Room scan data is transmitted to our processing server via this interface
-
-✅ Step 3: 3D Model Processing  
-Server converts your scan to URDF format for ROS2/Gazebo simulation
-
-🎯 Perfect for: TurtleBot, educational robotics, rapid prototyping
-🔧 Powered by: ROS2, Gazebo, Nav2, WebXR technology
-
-Controls: Trigger = Test AR, X = Toggle environment, Y = Export scan to server
-</div>
-</section>
-    <script type="importmap">
-      {
-        "imports": {
-          "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
-          "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Mobile Robot Programming Platform - Save Time & Money</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-      }
-    </script>
-        <script>
-if (location.protocol != 'https:')
-{
- location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
-}
-</script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script type="module" src="client.js"></script>
-	</body>
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+        }
+        
+        h1 {
+            font-size: clamp(2rem, 8vw, 3.5rem);
+            margin-bottom: 15px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        
+        .subtitle {
+            font-size: clamp(1rem, 4vw, 1.4rem);
+            margin-bottom: 20px;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+        
+        .hero-description {
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .hero-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: clamp(20px, 5vw, 60px);
+            margin: 20px 10px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .value-proposition {
+            background: linear-gradient(135deg, #00c851 0%, #00a83d 100%);
+            color: white;
+            padding: clamp(25px, 6vw, 40px);
+            border-radius: 15px;
+            margin: 30px 10px;
+            text-align: center;
+        }
+        
+        .value-proposition h2 {
+            font-size: clamp(1.3rem, 5vw, 2rem);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .value-text {
+            font-size: clamp(0.95rem, 3.5vw, 1.1rem);
+            line-height: 1.7;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .feature-card {
+            background: white;
+            padding: clamp(20px, 4vw, 30px);
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .feature-icon {
+            font-size: clamp(2rem, 6vw, 3rem);
+            margin-bottom: 15px;
+            line-height: 1;
+        }
+        
+        .feature-card h3 {
+            font-size: clamp(1.1rem, 4vw, 1.3rem);
+            margin-bottom: 15px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .feature-card p {
+            font-size: clamp(0.9rem, 3vw, 1rem);
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            padding: clamp(12px, 3vw, 18px) clamp(25px, 6vw, 40px);
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: clamp(1rem, 4vw, 1.2rem);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 15px 10px;
+            text-align: center;
+            min-width: 200px;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .cta-button.secondary {
+            background: #34495e;
+        }
+        
+        .demo-section {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .benefits-list {
+            background: rgba(255, 255, 255, 0.1);
+            padding: clamp(20px, 4vw, 30px);
+            border-radius: 12px;
+            margin: 20px 0;
+            backdrop-filter: blur(5px);
+        }
+        
+        .benefits-list ul {
+            list-style: none;
+            text-align: left;
+        }
+        
+        .benefits-list li {
+            font-size: clamp(0.95rem, 3.5vw, 1.1rem);
+            margin: 15px 0;
+            padding-left: 30px;
+            position: relative;
+            line-height: 1.6;
+        }
+        
+        .benefits-list li:before {
+            content: "✅";
+            position: absolute;
+            left: 0;
+            font-size: 1.2em;
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 5px; }
+            .hero-section { margin: 15px 5px; padding: 20px; }
+            .value-proposition { margin: 20px 5px; }
+            .feature-grid { grid-template-columns: 1fr; gap: 15px; }
+            .cta-button { margin: 10px 5px; min-width: auto; width: calc(100% - 10px); }
+        }
+        
+        @media (max-width: 480px) {
+            header { padding: 30px 15px; }
+            .feature-card { padding: 20px 15px; }
+            .value-text { font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Mobile Robot Programming Platform</h1>
+            <p class="subtitle">Save Time & Money with Mixed Reality</p>
+            <p class="hero-description">Transform robot setup from hours to minutes using intuitive mixed reality technology</p>
+        </header>
+
+        <div class="value-proposition">
+            <h2>💰 Save Money & Time</h2>
+            <div class="benefits-list">
+                <ul>
+                    <li><strong>No specialized staff needed:</strong> Anyone can configure mobile robots without hiring qualified technicians</li>
+                    <li><strong>Instant setup:</strong> Create navigation maps by simply walking through your facility</li>
+                    <li><strong>Game-like interface:</strong> Point and click to set robot routes using spatial controllers</li>
+                    <li><strong>Remote support:</strong> Share 3D facility models with specialists for instant remote assistance</li>
+                    <li><strong>No waiting:</strong> Deploy robots immediately without scheduling technician visits</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="hero-section">
+            <h2 style="text-align: center; margin-bottom: 25px; color: #333; font-size: clamp(1.3rem, 5vw, 2rem);">Revolutionary Robot Configuration</h2>
+            <p style="font-size: clamp(1rem, 3.5vw, 1.2rem); text-align: center; margin-bottom: 30px; color: #666; line-height: 1.7;">
+                Our development allows your company to save time and money on mobile robot setup by eliminating the need to hire qualified workers or wait for their availability. Using mixed reality headsets with built-in scanners, intuitive interfaces, and virtual robot movement simulation, you can quickly create navigation maps and safely configure robot paths simply by walking through the premises and pointing out route points with spatial controllers.
+            </p>
+            
+            <div class="demo-section">
+                <a href="/mr/" class="cta-button">🚀 Launch MR Scanner</a>
+                <a href="#features" class="cta-button secondary">📋 How It Works</a>
+            </div>
+        </div>
+
+        <div id="features" class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🥽</div>
+                <h3>Mixed Reality Setup</h3>
+                <p>Walk through your facility wearing MR headset. Built-in scanners automatically capture the environment and create 3D maps.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🎮</div>
+                <h3>Game-Like Interface</h3>
+                <p>Point and click to set robot waypoints. Much simpler than traditional manual robot control and computer-based route configuration.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Instant Deployment</h3>
+                <p>Robot paths configured in minutes, not hours. No waiting for specialized technicians or extensive training required.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🌐</div>
+                <h3>Remote Expert Support</h3>
+                <p>When specialist help is needed, share 3D facility models instantly. Experts can work virtually without traveling to your site.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">�</div>
+                <h3>Cost Savings</h3>
+                <p>Eliminate hiring costs for specialized robot technicians. Reduce downtime and deployment delays significantly.</p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3>Next-Level Support</h3>
+                <p>Customer support reaches new heights with virtual presence capabilities and instant 3D environment sharing.</p>
+            </div>
+        </div>
+
+        <div class="hero-section" style="text-align: center;">
+            <h2 style="margin-bottom: 20px; font-size: clamp(1.3rem, 5vw, 2rem);">Ready to Transform Your Production?</h2>
+            <p style="font-size: clamp(1rem, 3.5vw, 1.1rem); margin-bottom: 25px; color: #666; line-height: 1.7;">
+                <strong>Our solution saves your money and time</strong> by eliminating the need to hire qualified workers and performs production setup tasks using mobile robots. If support is needed, you can quickly connect and start working with a specialist remotely.
+            </p>
+            <a href="/mr/" class="cta-button" style="font-size: clamp(1.1rem, 4vw, 1.3rem); padding: clamp(15px, 4vw, 20px) clamp(30px, 7vw, 50px);">
+                🚀 Start Robot Setup Now
+            </a>
+        </div>
+    </div>
+</body>
 </html>

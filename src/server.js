@@ -25,6 +25,11 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // Serve static files
 app.use(express.static(path.join(__dirname, "public")));
 
+// Serve client.js from the src directory
+app.get("/client.js", (req, res) => {
+  res.sendFile(path.join(__dirname, "client.js"));
+});
+
 // Security headers for production
 if (NODE_ENV === 'production') {
   app.use((req, res, next) => {
@@ -38,6 +43,14 @@ if (NODE_ENV === 'production') {
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.get("/mr", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "mr.html"));
+});
+
+app.get("/mr/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "mr.html"));
 });
 
 // Health check endpoint for AWS
