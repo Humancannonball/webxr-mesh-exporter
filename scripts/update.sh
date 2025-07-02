@@ -38,7 +38,7 @@ REMOTE=$(git rev-parse origin/main)
 
 if [ "$LOCAL" = "$REMOTE" ]; then
     echo "✅ Application is already up to date!"
-    sudo pm2 status $APP_NAME
+    sudo pm2 status
     exit 0
 fi
 
@@ -58,7 +58,11 @@ fi
 
 # Restart the application (requires sudo for port 80)
 echo "🚀 Restarting application..."
-sudo pm2 restart $APP_NAME
+# Try by name first, then by ID if name fails
+if ! sudo pm2 restart $APP_NAME 2>/dev/null; then
+    echo "⚠️ Restarting by name failed, trying by process ID..."
+    sudo pm2 restart 0
+fi
 
 # Check application health
 echo "🏥 Checking application health..."
@@ -67,14 +71,14 @@ sleep 5
 if curl -s -f "http://localhost/health" > /dev/null; then
     echo "✅ Application updated successfully!"
     echo "📊 Current status:"
-    sudo pm2 status $APP_NAME
+    sudo pm2 status
     echo ""
     echo "🌐 Application accessible at:"
     echo "   HTTP:  http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo 'YOUR_INSTANCE_IP')"
     echo "   HTTPS: https://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo 'YOUR_INSTANCE_IP')"
 else
     echo "❌ Application health check failed!"
-    echo "📝 Check logs: sudo pm2 logs $APP_NAME"
+    echo "📝 Check logs: sudo pm2 logs"
     exit 1
 fi
 
