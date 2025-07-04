@@ -70,10 +70,23 @@ echo "📂 Creating application directory..."
 sudo mkdir -p $APP_DIR
 sudo chown -R $USER:$USER $APP_DIR
 
-# Clone repository
+# Clone repository (handle existing directory)
 echo "📥 Cloning repository..."
-git clone $REPO_URL $APP_DIR
-cd $APP_DIR
+if [ -d "$APP_DIR/.git" ]; then
+    echo "Repository already exists, updating..."
+    cd $APP_DIR
+    git fetch origin
+    git reset --hard origin/main
+    git clean -fd
+else
+    # Remove existing directory if it exists but isn't a git repo
+    if [ -d "$APP_DIR" ] && [ "$(ls -A $APP_DIR)" ]; then
+        echo "Removing existing non-git directory..."
+        sudo rm -rf $APP_DIR/*
+    fi
+    git clone $REPO_URL $APP_DIR
+    cd $APP_DIR
+fi
 
 # Install dependencies
 echo "📦 Installing Node.js dependencies..."
@@ -93,7 +106,12 @@ sudo rm -f /etc/nginx/sites-enabled/default
 
 # Add rate limiting to main nginx.conf
 echo "🔧 Adding rate limiting to nginx.conf..."
-sudo sed -i '/http {/a\\n\t# Rate limiting zones for WebXR app\n\tlimit_req_zone $binary_remote_addr zone=api:10m rate=30r/m;\n\tlimit_req_zone $binary_remote_addr zone=websocket:10m rate=60r/m;\n' /etc/nginx/nginx.conf
+if ! grep -q "limit_req_zone.*api:" /etc/nginx/nginx.conf; then
+    sudo sed -i '/http {/a\\n\t# Rate limiting zones for WebXR app\n\tlimit_req_zone $binary_remote_addr zone=api:10m rate=30r/m;\n\tlimit_req_zone $binary_remote_addr zone=websocket:10m rate=60r/m;\n' /etc/nginx/nginx.conf
+    echo "✅ Rate limiting zones added to nginx.conf"
+else
+    echo "✅ Rate limiting zones already configured"
+fi
 
 # Test Nginx configuration
 echo "🔍 Testing Nginx configuration..."
@@ -158,12 +176,22 @@ sudo systemctl reload nginx
 
 # Start the application with PM2
 echo "🚀 Starting application..."
-pm2 start config/ecosystem.config.js --env production
+if pm2 list | grep -q "webxr-mesh-exporter"; then
+    echo "Application already running, restarting..."
+    pm2 restart webxr-mesh-exporter
+else
+    pm2 start config/ecosystem.config.js --env production
+fi
 pm2 save
-pm2 startup
 
-echo "📝 Setting up PM2 startup script..."
-sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u $USER --hp /home/$USER
+# Setup PM2 startup (only if not already configured)
+if ! systemctl is-enabled pm2-ubuntu >/dev/null 2>&1; then
+    pm2 startup
+    echo "📝 Setting up PM2 startup script..."
+    sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u $USER --hp /home/$USER
+else
+    echo "✅ PM2 startup already configured"
+fi
 
 # Get SSL certificate
 echo "🔐 Setting up SSL certificate..."
