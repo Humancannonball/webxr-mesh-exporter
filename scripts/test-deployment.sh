@@ -37,6 +37,7 @@ fi
 # Test application
 echo ""
 echo "📱 Testing Node.js Application:"
+APP_DIR="/opt/webxr-mesh-exporter"
 if pm2 status | grep -q "webxr-mesh-exporter"; then
     echo "✅ Application is running via PM2"
     pm2 status | grep "webxr-mesh-exporter"
@@ -44,8 +45,14 @@ else
     echo "❌ Application is not running"
     if [ "$SERVER_MODE" = true ]; then
         echo "🔄 Attempting to start application..."
-        cd /opt/webxr-mesh-exporter
-        pm2 start config/ecosystem.config.js --env production
+        cd "$APP_DIR" || cd /home/ubuntu/webxr-mesh-exporter
+        if [ -f "config/ecosystem.config.js" ]; then
+            pm2 start config/ecosystem.config.js --env production
+        else
+            echo "❌ ecosystem.config.js not found in $(pwd)"
+            echo "📁 Available files:"
+            ls -la config/ 2>/dev/null || echo "No config directory found"
+        fi
     fi
 fi
 
@@ -91,8 +98,11 @@ fi
 echo ""
 echo "🌍 Testing Domain Accessibility:"
 if [ "$SERVER_MODE" = true ]; then
-    # Get public IP
-    PUBLIC_IP=$(curl -s --connect-timeout 5 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || echo "UNKNOWN")
+    # Get public IP (try multiple methods)
+    PUBLIC_IP=$(curl -s --connect-timeout 5 http://169.254.169.254/latest/meta-data/public-ipv4 2>/dev/null || \
+                curl -s --connect-timeout 5 http://checkip.amazonaws.com 2>/dev/null || \
+                curl -s --connect-timeout 5 https://ipinfo.io/ip 2>/dev/null || \
+                echo "UNKNOWN")
     echo "📍 Server Public IP: $PUBLIC_IP"
     
     # Test domain resolution
