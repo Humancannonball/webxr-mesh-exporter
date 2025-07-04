@@ -91,6 +91,10 @@ sudo cp nginx/webxr-mesh-exporter.conf /etc/nginx/sites-available/webxr-mesh-exp
 sudo ln -sf /etc/nginx/sites-available/webxr-mesh-exporter /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 
+# Add rate limiting to main nginx.conf
+echo "🔧 Adding rate limiting to nginx.conf..."
+sudo sed -i '/http {/a\\n\t# Rate limiting zones for WebXR app\n\tlimit_req_zone $binary_remote_addr zone=api:10m rate=30r/m;\n\tlimit_req_zone $binary_remote_addr zone=websocket:10m rate=60r/m;\n' /etc/nginx/nginx.conf
+
 # Test Nginx configuration
 echo "🔍 Testing Nginx configuration..."
 sudo nginx -t
