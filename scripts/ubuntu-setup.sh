@@ -113,6 +113,15 @@ else
     echo "✅ Rate limiting zones already configured"
 fi
 
+# Add WebSocket upgrade mapping to main nginx.conf
+echo "🔧 Adding WebSocket upgrade mapping to nginx.conf..."
+if ! grep -q "connection_upgrade" /etc/nginx/nginx.conf; then
+    sudo sed -i '/http {/a\\n\t# WebSocket upgrade support\n\tmap $http_upgrade $connection_upgrade {\n\t\tdefault upgrade;\n\t\t'\'''\'' close;\n\t}\n' /etc/nginx/nginx.conf
+    echo "✅ WebSocket upgrade mapping added to nginx.conf"
+else
+    echo "✅ WebSocket upgrade mapping already configured"
+fi
+
 # Test Nginx configuration
 echo "🔍 Testing Nginx configuration..."
 sudo nginx -t

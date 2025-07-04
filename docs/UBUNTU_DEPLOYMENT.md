@@ -42,6 +42,31 @@ Internet → Nginx (80/443) → Node.js (3000) → WebXR App
 - **UFW**: Enhanced firewall configuration
 - **Fail2ban**: Intrusion prevention with custom nginx rules
 
+### Nginx Configuration Structure
+
+The Nginx setup uses a layered configuration approach:
+
+1. **Main Config** (`/etc/nginx/nginx.conf`):
+   - Global HTTP settings
+   - Rate limiting zones (`limit_req_zone`)
+   - WebSocket upgrade mapping (`map $http_upgrade $connection_upgrade`)
+   - Include directive for site configs
+
+2. **Site Config** (`/etc/nginx/sites-available/webxr-mesh-exporter`):
+   - SSL configuration and certificates
+   - HTTP to HTTPS redirects
+   - Reverse proxy to Node.js (port 3000)
+   - Security headers and rate limiting rules
+   - WebSocket support for real-time features
+
+3. **Key Features**:
+   - **SSL/TLS**: Let's Encrypt certificates with auto-renewal
+   - **Rate Limiting**: API endpoints (30 req/min), WebSocket (60 req/min)
+   - **Security Headers**: HSTS, CSP, X-Frame-Options, etc.
+   - **WebSocket Support**: For real-time mesh streaming
+   - **Compression**: Gzip for static assets
+   - **Caching**: Static file caching with proper headers
+
 ## Features
 
 ### ✅ **Web Application**
@@ -115,30 +140,115 @@ sudo systemctl status snap.certbot.renew.timer
 
 ## Troubleshooting
 
-### Common Issues
+### Common Issues and Solutions
 
-**1. Application not starting**
+#### 1. Nginx Configuration Errors
+
+**Error**: `nginx: [emerg] "map" directive is not allowed here`
+**Solution**: The `map` directive must be in the `http` block, not in `server` block.
+
 ```bash
+# Fix automatically
+./scripts/fix-nginx-config.sh
+
+# Or manually check/fix
+sudo nginx -t
+sudo nano /etc/nginx/nginx.conf
+```
+
+**Error**: `nginx: [emerg] "limit_req_zone" directive is not allowed here`
+**Solution**: Rate limiting zones must be in the `http` block.
+
+```bash
+# Check current config
+sudo nginx -t
+
+# View current nginx.conf structure
+sudo grep -n "http {" /etc/nginx/nginx.conf
+sudo grep -n "limit_req_zone" /etc/nginx/nginx.conf
+```
+
+#### 2. SSL Certificate Issues
+
+**Error**: Certificate not found or expired
+**Solution**: 
+```bash
+# Check certificate status
+sudo certbot certificates
+
+# Renew certificates
+sudo certbot renew
+
+# Test renewal
+sudo certbot renew --dry-run
+```
+
+#### 3. Application Not Starting
+
+**Error**: PM2 app not running
+**Solution**:
+```bash
+# Check PM2 status
+pm2 status
+
+# View logs
 pm2 logs webxr-mesh-exporter
+
+# Restart application
 pm2 restart webxr-mesh-exporter
 ```
 
-**2. SSL certificate issues**
+#### 4. Port Already in Use
+
+**Error**: `EADDRINUSE: address already in use :::3000`
+**Solution**:
 ```bash
-sudo certbot certificates
-sudo certbot renew --force-renewal
+# Find process using port 3000
+sudo netstat -tlnp | grep :3000
+sudo lsof -i :3000
+
+# Kill process if needed
+sudo kill -9 <PID>
+
+# Restart application
+pm2 restart webxr-mesh-exporter
 ```
 
-**3. Nginx configuration errors**
+#### 5. Firewall Issues
+
+**Error**: Cannot access website
+**Solution**:
 ```bash
-sudo nginx -t
+# Check firewall status
+sudo ufw status
+
+# Allow required ports
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw allow 22/tcp
+
+# Check if nginx is running
 sudo systemctl status nginx
 ```
 
-**4. Port conflicts**
+#### 6. Recovery Commands
+
+If the deployment fails partially:
+
 ```bash
-sudo netstat -tulpn | grep :3000
-sudo netstat -tulpn | grep :80
+# 1. Fix Nginx configuration
+./scripts/fix-nginx-config.sh
+
+# 2. Restart services
+sudo systemctl restart nginx
+pm2 restart all
+
+# 3. Check logs
+sudo journalctl -u nginx -f
+pm2 logs
+
+# 4. Re-run deployment
+./scripts/ubuntu-setup.sh
 ```
 
 ### Log Locations
