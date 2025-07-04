@@ -113,13 +113,74 @@ sudo systemctl start fail2ban
 
 # Start application
 echo "🚀 Starting application..."
-pm2 start src/server.js --name webxr-mesh-exporter
+PORT=3000 pm2 start src/server.js --name webxr-mesh-exporter
 pm2 save
 pm2 startup
+
+# Verify application is running
+echo "🔍 Verifying application..."
+sleep 3
+if pm2 list | grep -q "online"; then
+    echo "✅ Application is running"
+    pm2 status
+    
+    # Test if app responds on port 3000
+    if curl -s http://localhost:3000 >/dev/null; then
+        echo "✅ Application responding on port 3000"
+    else
+        echo "❌ Application not responding on port 3000"
+    fi
+else
+    echo "❌ Application failed to start. Checking logs..."
+    pm2 logs webxr-mesh-exporter --lines 20
+    echo "🔧 Attempting to restart..."
+    pm2 restart webxr-mesh-exporter || PORT=3000 pm2 start src/server.js --name webxr-mesh-exporter
+fi
 
 # Get SSL certificate
 echo "🔐 Getting SSL certificate..."
 sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN --email $USER_EMAIL --agree-tos --no-eff-email --redirect --non-interactive || echo "⚠️  SSL setup failed, app running on HTTP"
+
+# Fix nginx config after Certbot (Certbot sometimes breaks the proxy)
+echo "🔧 Ensuring proxy settings are correct after SSL setup..."
+sudo tee /etc/nginx/sites-available/webxr-mesh-exporter << 'EOF'
+server {
+    listen 80;
+    server_name industreo.works www.industreo.works;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name industreo.works www.industreo.works;
+    
+    ssl_certificate /etc/letsencrypt/live/industreo.works/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/industreo.works/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+    
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection upgrade;
+    }
+}
+EOF
+
+# Reload nginx with the fixed config
+sudo systemctl reload nginx
+
+# Test HTTPS
+echo "🔍 Testing HTTPS..."
+if curl -I -k https://localhost >/dev/null 2>&1; then
+    echo "✅ HTTPS is working"
+else
+    echo "⚠️  HTTPS test failed"
+fi
 
 # Final status
 echo ""
