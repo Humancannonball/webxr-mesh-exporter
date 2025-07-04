@@ -126,6 +126,11 @@ fi
 echo "🔍 Testing Nginx configuration..."
 sudo nginx -t
 
+# Create web root for Certbot
+echo "📁 Creating web root for SSL verification..."
+sudo mkdir -p /var/www/html
+sudo chown -R www-data:www-data /var/www/html
+
 # Configure firewall with improved rules for Ubuntu 24.04
 echo "🔒 Configuring firewall..."
 sudo ufw --force reset
@@ -183,6 +188,21 @@ sudo systemctl enable nginx
 sudo systemctl start nginx
 sudo systemctl reload nginx
 
+# Verify Nginx is running before SSL setup
+echo "🔍 Verifying Nginx is running..."
+if ! sudo systemctl is-active --quiet nginx; then
+    echo "❌ Nginx failed to start. Checking logs..."
+    sudo journalctl -u nginx -n 10 --no-pager
+    echo "❌ Attempting to restart Nginx..."
+    sudo systemctl restart nginx
+    sleep 5
+    if ! sudo systemctl is-active --quiet nginx; then
+        echo "❌ Nginx still not running. Exiting..."
+        exit 1
+    fi
+fi
+echo "✅ Nginx is running successfully"
+
 # Start the application with PM2
 echo "🚀 Starting application..."
 if pm2 list | grep -q "webxr-mesh-exporter"; then
@@ -204,23 +224,50 @@ fi
 
 # Get SSL certificate
 echo "🔐 Setting up SSL certificate..."
-sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN \
-    --email $USER_EMAIL \
-    --agree-tos \
-    --no-eff-email \
-    --redirect
-
-# Test SSL renewal
-echo "🔄 Testing SSL certificate renewal..."
-sudo certbot renew --dry-run
-
-# Setup automatic renewal with systemd timer (Ubuntu 24.04 style)
-echo "⏰ Setting up automatic SSL renewal..."
-sudo systemctl enable snap.certbot.renew.timer
-sudo systemctl start snap.certbot.renew.timer
-
-# Verify the timer is active
-sudo systemctl status snap.certbot.renew.timer --no-pager
+echo "📍 Testing domain accessibility..."
+if curl -I -s --connect-timeout 10 http://$DOMAIN | grep -q "HTTP"; then
+    echo "✅ Domain is accessible via HTTP"
+    
+    # Attempt to get SSL certificate
+    if sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN \
+        --email $USER_EMAIL \
+        --agree-tos \
+        --no-eff-email \
+        --redirect \
+        --non-interactive; then
+        echo "✅ SSL certificate obtained successfully"
+        
+        # Test SSL renewal
+        echo "🔄 Testing SSL certificate renewal..."
+        sudo certbot renew --dry-run
+        
+        # Setup automatic renewal with systemd timer (Ubuntu 24.04 style)
+        echo "⏰ Setting up automatic SSL renewal..."
+        sudo systemctl enable snap.certbot.renew.timer
+        sudo systemctl start snap.certbot.renew.timer
+        
+        # Verify the timer is active
+        sudo systemctl status snap.certbot.renew.timer --no-pager
+    else
+        echo "⚠️  SSL certificate setup failed. The application will run on HTTP."
+        echo "📋 Common reasons for SSL failure:"
+        echo "   - Domain DNS not pointing to this server"
+        echo "   - Firewall blocking ports 80/443"
+        echo "   - Domain not accessible from the internet"
+        echo ""
+        echo "🔧 To retry SSL setup later, run:"
+        echo "   sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN --email $USER_EMAIL --agree-tos --no-eff-email --redirect"
+    fi
+else
+    echo "⚠️  Domain not accessible via HTTP. Skipping SSL setup."
+    echo "📋 Please ensure:"
+    echo "   - Domain DNS points to this server's IP"
+    echo "   - Firewall allows ports 80 and 443"
+    echo "   - Domain is accessible from the internet"
+    echo ""
+    echo "🔧 To retry SSL setup later, run:"
+    echo "   sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN --email $USER_EMAIL --agree-tos --no-eff-email --redirect"
+fi
 
 # Create update script
 echo "📝 Creating update script..."
