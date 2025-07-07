@@ -55,14 +55,7 @@ Controls: Trigger = Test AR, X = Toggle environment, Y = Export to server
 					"three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
 				}
 			}
-		</script>
-		
-		<script>
-			if (location.protocol != 'https:') {
-				location.href = 'https:' + window.location.href.substring(window.location.protocol.length);
-			}
-		</script>
-		
+		</script>				
 		<script src="/socket.io/socket.io.js"></script>
 		<script type="module" src="/client.js"></script>
 	</body>
