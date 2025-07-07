@@ -14,10 +14,12 @@ const socket = io();
 // Socket connection event handlers
 socket.on('connect', () => {
   console.log('Connected to server with ID:', socket.id);
+  updateConnectionStatus(true);
 });
 
 socket.on('disconnect', () => {
   console.log('Disconnected from server');
+  updateConnectionStatus(false);
 });
 
 socket.on('sceneExportNotification', (data) => {
@@ -335,6 +337,7 @@ function init() {
     addLocalClientToVR();
     planes = new XRPlanes(renderer);
     planeGroup.add(planes);
+    hideLoadingScreen();
     //physics.addMesh(controllerGrip1);
     //physics.addMesh(controllerGrip2);
   });
@@ -461,6 +464,13 @@ function init() {
   });
 
   window.addEventListener("resize", onWindowResize);
+  
+  // Hide loading screen once 3D scene is ready
+  setTimeout(() => {
+    if (!renderer?.xr?.isPresenting) {
+      hideLoadingScreen();
+    }
+  }, 1500);
 }
 
 ///////////////////////////
@@ -1101,6 +1111,9 @@ function processMeshes(timestamp, frame) {
 
         scene.remove(meshContext.mesh);
         scene.remove(meshContext.wireframe);
+        
+        // Update mesh count in UI
+        updateMeshCount(allMeshes.size);
       }
     });
     // compare all incoming meshes with our internal state
@@ -1191,6 +1204,9 @@ function processMeshes(timestamp, frame) {
         allMeshes.set(mesh, meshContext);
         console.debug("New mesh detected, id=" + meshId);
         meshId++;
+        
+        // Update mesh count in UI
+        updateMeshCount(allMeshes.size);
       }
 
       if (meshPose) {
@@ -1900,3 +1916,53 @@ function cloneScene(originalScene) {
 
   return clonedScene;
 }
+
+// UI Management Functions
+function hideLoadingScreen() {
+  const loadingScreen = document.getElementById('loading-screen');
+  const uiOverlay = document.getElementById('ui-overlay');
+  
+  if (loadingScreen) {
+    loadingScreen.classList.add('fade-out');
+    setTimeout(() => {
+      loadingScreen.style.display = 'none';
+    }, 1000);
+  }
+  
+  if (uiOverlay) {
+    uiOverlay.style.display = 'block';
+  }
+}
+
+function toggleInfoPanel() {
+  const infoPanel = document.getElementById('info-panel');
+  if (infoPanel) {
+    infoPanel.classList.toggle('minimized');
+  }
+}
+
+function updateConnectionStatus(connected) {
+  const statusElement = document.getElementById('connection-status');
+  if (statusElement) {
+    const indicator = '<span class="status-indicator' + (connected ? '' : ' disconnected') + '"></span>';
+    statusElement.innerHTML = indicator + (connected ? 'Connected' : 'Disconnected');
+  }
+}
+
+function updateMeshCount(count) {
+  const meshCountElement = document.getElementById('mesh-count');
+  if (meshCountElement) {
+    meshCountElement.textContent = `📊 Meshes: ${count}`;
+  }
+}
+
+// Initialize UI once DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  // Hide loading screen after a short delay if WebXR is not supported
+  setTimeout(() => {
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen && !renderer?.xr?.isPresenting) {
+      hideLoadingScreen();
+    }
+  }, 3000); // Wait 3 seconds then show UI regardless
+});

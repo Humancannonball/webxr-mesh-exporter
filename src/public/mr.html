@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<meta charset="utf-8">
+		<meta char				<span id="connection-status">🔗 Connected</span>et="utf-8">
 		<title>Mixed Reality Robot Programming Platform</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 		<meta name="mobile-web-app-capable" content="yes">
@@ -20,33 +20,41 @@
 		</style>
 	</head>
 	<body>
+		<!-- Loading screen that will fade out once WebXR loads -->
 		<section id="loading-screen">
 			<div id="loader"></div>
 			<div id="title">MR Robot Programming</div>
-			<div id="count">
-🤖 Mobile Robot Configuration Platform 🥽
-
-📡 ROOM SCAN & ROBOT SETUP TOOL 📡
-Mixed reality interface for instant mobile robot programming
-
-✅ Step 1: Scan Your Environment
-Use your MR headset to scan the facility using built-in sensors
-
-✅ Step 2: Configure Robot Paths
-Point and click to set waypoints - simple as playing a game
-
-✅ Step 3: Deploy Instantly  
-Robot is ready to navigate your facility in minutes
-
-🎯 Benefits: No specialized staff needed, instant setup, remote support
-🔧 Technology: WebXR, Mixed Reality, Spatial Computing
-
-💰 SAVE TIME & MONEY: Configure robots without hiring technicians
-� INSTANT DEPLOYMENT: Walk through facility, point routes, deploy
-
-Controls: Trigger = Test AR, X = Toggle environment, Y = Export to server
-			</div>
+			<div id="count">Loading WebXR environment...</div>
 		</section>
+
+		<!-- WebXR UI overlay -->
+		<div id="ui-overlay" style="display: none;">
+			<div id="info-panel" onclick="toggleInfoPanel()">
+				<h1>🤖 Robot Configuration Platform 🥽</h1>
+				<h2>📡 ROOM SCAN & ROBOT SETUP 📡</h2>
+				<p>Mixed reality interface for instant mobile robot programming</p>
+				
+				<div class="steps">
+					<h3>✅ Step 1: Scan Your Environment</h3>
+					<p>Use your MR headset to scan the facility</p>
+					
+					<h3>✅ Step 2: Configure Robot Paths</h3>
+					<p>Point and click to set waypoints</p>
+					
+					<h3>✅ Step 3: Deploy Instantly</h3>
+					<p>Robot ready in minutes</p>
+				</div>
+				
+				<div class="controls">
+					<p><strong>Controls:</strong> Trigger = Test AR, X = Toggle environment, Y = Export to server</p>
+				</div>
+			</div>
+			
+			<div id="status-bar">
+				<span id="connection-status">� Connected</span>
+				<span id="mesh-count">📊 Meshes: 0</span>
+			</div>
+		</div>
 		
 		<script type="importmap">
 			{
