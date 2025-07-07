@@ -7,13 +7,13 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production' ? false : [`http://localhost:${process.env.PORT || 80}`, `http://127.0.0.1:${process.env.PORT || 80}`],
+    origin: process.env.NODE_ENV === 'production' ? false : [`http://localhost:${process.env.PORT || 3000}`, `http://127.0.0.1:${process.env.PORT || 3000}`],
     methods: ["GET", "POST"]
   }
 });
 
 // Environment configuration
-const PORT = process.env.PORT || 80;
+const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 let clock = Date.now();
