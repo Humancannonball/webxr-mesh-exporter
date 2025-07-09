@@ -44,49 +44,52 @@
 				position: absolute !important;
 				top: 20px !important;
 				left: 20px !important;
-				max-width: 420px !important;
-				background: rgba(16, 16, 24, 0.95) !important;
-				backdrop-filter: blur(20px) !important;
-				-webkit-backdrop-filter: blur(20px) !important;
-				border: 1px solid rgba(0, 255, 136, 0.5) !important;
-				border-radius: 16px !important;
-				padding: 24px !important;
+				max-width: 600px !important;
+				background: rgba(6, 6, 14, 0.98) !important;
+				backdrop-filter: blur(25px) !important;
+				-webkit-backdrop-filter: blur(25px) !important;
+				border: 3px solid rgba(0, 255, 136, 0.7) !important;
+				border-radius: 20px !important;
+				padding: 40px !important;
 				pointer-events: auto !important;
 				display: block !important;
 				visibility: visible !important;
 				opacity: 1 !important;
 				box-shadow: 
-					0 8px 32px rgba(0, 0, 0, 0.5),
-					0 0 20px rgba(0, 255, 136, 0.3),
-					inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+					0 16px 50px rgba(0, 0, 0, 0.8),
+					0 0 35px rgba(0, 255, 136, 0.6),
+					0 0 60px rgba(0, 204, 255, 0.3),
+					inset 0 2px 0 rgba(255, 255, 255, 0.2) !important;
 				animation: neonPulse 3s ease-in-out infinite alternate !important;
+				font-size: 16px !important;
 			}
 			
 			#info-panel:hover {
-				transform: translateY(-2px) !important;
+				transform: translateY(-4px) !important;
 				box-shadow: 
-					0 12px 40px rgba(0, 0, 0, 0.6),
-					0 0 30px rgba(0, 255, 136, 0.5),
-					0 0 60px rgba(0, 204, 255, 0.2),
-					inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-				border-color: rgba(0, 255, 136, 0.8) !important;
+					0 20px 60px rgba(0, 0, 0, 0.9),
+					0 0 50px rgba(0, 255, 136, 0.8),
+					0 0 100px rgba(0, 204, 255, 0.5),
+					inset 0 2px 0 rgba(255, 255, 255, 0.25) !important;
+				border-color: rgba(0, 255, 136, 1) !important;
 			}
 			
 			@keyframes neonPulse {
 				0% {
 					box-shadow: 
-						0 8px 32px rgba(0, 0, 0, 0.5),
-						0 0 20px rgba(0, 255, 136, 0.3),
-						inset 0 1px 0 rgba(255, 255, 255, 0.1);
-					border-color: rgba(0, 255, 136, 0.5);
+						0 16px 50px rgba(0, 0, 0, 0.8),
+						0 0 35px rgba(0, 255, 136, 0.6),
+						0 0 60px rgba(0, 204, 255, 0.3),
+						inset 0 2px 0 rgba(255, 255, 255, 0.2);
+					border-color: rgba(0, 255, 136, 0.7);
 				}
 				100% {
 					box-shadow: 
-						0 8px 32px rgba(0, 0, 0, 0.5),
-						0 0 30px rgba(0, 255, 136, 0.6),
-						0 0 50px rgba(0, 204, 255, 0.3),
-						inset 0 1px 0 rgba(255, 255, 255, 0.1);
-					border-color: rgba(0, 255, 136, 0.7);
+						0 16px 50px rgba(0, 0, 0, 0.8),
+						0 0 45px rgba(0, 255, 136, 0.9),
+						0 0 80px rgba(0, 204, 255, 0.6),
+						inset 0 2px 0 rgba(255, 255, 255, 0.2);
+					border-color: rgba(0, 255, 136, 0.9);
 				}
 			}
 			
@@ -98,75 +101,188 @@
 				display: flex !important;
 				justify-content: space-between !important;
 				align-items: center !important;
-				background: rgba(16, 16, 24, 0.9) !important;
-				backdrop-filter: blur(10px) !important;
-				-webkit-backdrop-filter: blur(10px) !important;
-				border: 1px solid rgba(0, 255, 136, 0.4) !important;
-				border-radius: 12px !important;
-				padding: 12px 20px !important;
+				background: rgba(6, 6, 14, 0.98) !important;
+				backdrop-filter: blur(15px) !important;
+				-webkit-backdrop-filter: blur(15px) !important;
+				border: 3px solid rgba(0, 255, 136, 0.6) !important;
+				border-radius: 16px !important;
+				padding: 20px 36px !important;
 				pointer-events: auto !important;
 				box-shadow: 
-					0 4px 20px rgba(0, 0, 0, 0.3),
-					0 0 15px rgba(0, 255, 136, 0.2) !important;
+					0 8px 30px rgba(0, 0, 0, 0.6),
+					0 0 25px rgba(0, 255, 136, 0.4) !important;
 				visibility: visible !important;
 				opacity: 1 !important;
 				animation: statusGlow 4s ease-in-out infinite alternate !important;
+				font-size: 16px !important;
 			}
 			
 			@keyframes statusGlow {
 				0% {
 					box-shadow: 
-						0 4px 20px rgba(0, 0, 0, 0.3),
-						0 0 15px rgba(0, 255, 136, 0.2);
-					border-color: rgba(0, 255, 136, 0.4);
+						0 8px 30px rgba(0, 0, 0, 0.6),
+						0 0 25px rgba(0, 255, 136, 0.4);
+					border-color: rgba(0, 255, 136, 0.6);
 				}
 				100% {
 					box-shadow: 
-						0 4px 20px rgba(0, 0, 0, 0.3),
-						0 0 25px rgba(0, 255, 136, 0.4),
-						0 0 40px rgba(0, 204, 255, 0.2);
-					border-color: rgba(0, 255, 136, 0.6);
+						0 8px 30px rgba(0, 0, 0, 0.6),
+						0 0 35px rgba(0, 255, 136, 0.7),
+						0 0 60px rgba(0, 204, 255, 0.4);
+					border-color: rgba(0, 255, 136, 0.8);
 				}
 			}
 			
-			/* Neon text effects */
+			/* Balanced Neon text effects - Bigger but Comfortable */
 			.panel-header h1 {
 				background: linear-gradient(135deg, #00ff88, #00ccff) !important;
 				-webkit-background-clip: text !important;
 				-webkit-text-fill-color: transparent !important;
 				background-clip: text !important;
-				text-shadow: 0 0 10px rgba(0, 255, 136, 0.5) !important;
+				text-shadow: 
+					0 0 12px rgba(0, 255, 136, 0.6),
+					0 0 25px rgba(0, 255, 136, 0.4),
+					0 2px 6px rgba(0, 0, 0, 0.7) !important;
 				animation: textGlow 2s ease-in-out infinite alternate !important;
+				font-size: 32px !important;
+				font-weight: 800 !important;
+				margin-bottom: 16px !important;
+				letter-spacing: 0.3px !important;
+			}
+			
+			.panel-header h2 {
+				color: rgba(0, 255, 136, 0.9) !important;
+				font-size: 20px !important;
+				font-weight: 700 !important;
+				text-shadow: 
+					0 0 10px rgba(0, 255, 136, 0.5),
+					0 2px 4px rgba(0, 0, 0, 0.7) !important;
+				margin-bottom: 12px !important;
+				letter-spacing: 0.2px !important;
+			}
+			
+			.tagline {
+				color: rgba(255, 255, 255, 0.9) !important;
+				font-size: 18px !important;
+				font-weight: 500 !important;
+				text-shadow: 
+					0 0 6px rgba(255, 255, 255, 0.3),
+					0 2px 4px rgba(0, 0, 0, 0.7) !important;
+				margin-bottom: 28px !important;
+				letter-spacing: 0.1px !important;
+			}
+			
+			.step h3 {
+				color: rgba(255, 255, 255, 0.9) !important;
+				font-size: 20px !important;
+				font-weight: 700 !important;
+				text-shadow: 
+					0 0 6px rgba(255, 255, 255, 0.4),
+					0 2px 4px rgba(0, 0, 0, 0.7) !important;
+				margin-bottom: 10px !important;
+				letter-spacing: 0.1px !important;
+			}
+			
+			.step p {
+				color: rgba(255, 255, 255, 0.8) !important;
+				font-size: 16px !important;
+				font-weight: 400 !important;
+				text-shadow: 
+					0 0 3px rgba(255, 255, 255, 0.2),
+					0 1px 3px rgba(0, 0, 0, 0.6) !important;
+				line-height: 1.6 !important;
+			}
+			
+			.controls h4 {
+				color: rgba(0, 255, 136, 0.9) !important;
+				font-size: 20px !important;
+				font-weight: 700 !important;
+				text-shadow: 
+					0 0 8px rgba(0, 255, 136, 0.5),
+					0 2px 4px rgba(0, 0, 0, 0.7) !important;
+				margin-bottom: 16px !important;
+				letter-spacing: 0.1px !important;
+			}
+			
+			.control-key {
+				color: rgba(0, 255, 136, 0.9) !important;
+				font-size: 15px !important;
+				font-weight: 700 !important;
+				text-shadow: 
+					0 0 6px rgba(0, 255, 136, 0.4),
+					0 1px 2px rgba(0, 0, 0, 0.7) !important;
+			}
+			
+			.control-desc {
+				color: rgba(255, 255, 255, 0.75) !important;
+				font-size: 14px !important;
+				font-weight: 400 !important;
+				text-shadow: 
+					0 0 3px rgba(255, 255, 255, 0.2),
+					0 1px 2px rgba(0, 0, 0, 0.6) !important;
+			}
+			
+			.btn {
+				padding: 18px 28px !important;
+				font-size: 18px !important;
+				font-weight: 700 !important;
+				border-radius: 12px !important;
+				text-shadow: 
+					0 0 4px rgba(255, 255, 255, 0.3),
+					0 1px 3px rgba(0, 0, 0, 0.6) !important;
+				letter-spacing: 0.2px !important;
+			}
+			
+			.status-item {
+				color: rgba(255, 255, 255, 0.9) !important;
+				font-size: 18px !important;
+				font-weight: 600 !important;
+				text-shadow: 
+					0 0 6px rgba(255, 255, 255, 0.3),
+					0 2px 4px rgba(0, 0, 0, 0.7) !important;
+				letter-spacing: 0.1px !important;
 			}
 			
 			@keyframes textGlow {
 				0% {
-					text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+					text-shadow: 
+						0 0 10px rgba(0, 255, 136, 0.5),
+						0 0 20px rgba(0, 255, 136, 0.3),
+						0 2px 6px rgba(0, 0, 0, 0.7);
 				}
 				100% {
 					text-shadow: 
-						0 0 20px rgba(0, 255, 136, 0.8),
-						0 0 30px rgba(0, 204, 255, 0.5);
+						0 0 18px rgba(0, 255, 136, 0.7),
+						0 0 35px rgba(0, 204, 255, 0.5),
+						0 0 45px rgba(0, 255, 136, 0.4),
+						0 2px 6px rgba(0, 0, 0, 0.7);
 				}
 			}
 			
 			.status-dot {
-				width: 8px !important;
-				height: 8px !important;
+				width: 12px !important;
+				height: 12px !important;
 				border-radius: 50% !important;
 				background: #00ff88 !important;
 				animation: dotPulse 2s infinite !important;
-				box-shadow: 0 0 10px rgba(0, 255, 136, 0.8) !important;
+				box-shadow: 
+					0 0 10px rgba(0, 255, 136, 0.8),
+					0 0 18px rgba(0, 255, 136, 0.4) !important;
 			}
 			
 			@keyframes dotPulse {
 				0%, 100% {
 					opacity: 1;
-					box-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+					box-shadow: 
+						0 0 10px rgba(0, 255, 136, 0.8),
+						0 0 18px rgba(0, 255, 136, 0.4);
 				}
 				50% {
-					opacity: 0.5;
-					box-shadow: 0 0 20px rgba(0, 255, 136, 1);
+					opacity: 0.8;
+					box-shadow: 
+						0 0 18px rgba(0, 255, 136, 0.9),
+						0 0 30px rgba(0, 255, 136, 0.6),
+						0 0 45px rgba(0, 204, 255, 0.4);
 				}
 			}
 		</style>
