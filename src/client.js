@@ -255,9 +255,7 @@ class XRPlanes extends Object3D {
 
 async function startApp() {
   init();
-  console.log("Starting physics initialization...");
   await initPhysics();
-  console.log("Physics initialized successfully");
 }
 
 // Start the application
@@ -1949,15 +1947,10 @@ function hideLoadingScreen() {
   const loadingScreen = document.getElementById('loading-screen');
   const uiOverlay = document.getElementById('ui-overlay');
   
-  console.log('hideLoadingScreen called');
-  console.log('Loading screen element:', loadingScreen);
-  console.log('UI overlay element:', uiOverlay);
-  
   if (loadingScreen) {
     loadingScreen.classList.add('fade-out');
     setTimeout(() => {
       loadingScreen.style.display = 'none';
-      console.log('Loading screen hidden');
     }, 1000);
   }
   
@@ -1965,9 +1958,6 @@ function hideLoadingScreen() {
     uiOverlay.style.display = 'block';
     uiOverlay.style.visibility = 'visible';
     uiOverlay.style.opacity = '1';
-    console.log('UI overlay should now be visible');
-  } else {
-    console.error('UI overlay element not found!');
   }
 }
 

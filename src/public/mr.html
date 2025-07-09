@@ -7,7 +7,10 @@
 		<meta name="mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-		<link type="text/css" rel="stylesheet" href="style.css">
+		<link type="text/css" rel="stylesheet" href="style.css?v=20250709">
+		<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+		<meta http-equiv="Pragma" content="no-cache">
+		<meta http-equiv="Expires" content="0">
 		<style>
 			body { 
 				margin: 0; 
@@ -16,6 +19,155 @@
 				-moz-user-select: none;
 				-ms-user-select: none;
 				user-select: none;
+			}
+			
+			/* Force overlay visibility - Cross-browser compatibility */
+			#ui-overlay {
+				position: fixed !important;
+				top: 0 !important;
+				left: 0 !important;
+				right: 0 !important;
+				bottom: 0 !important;
+				width: 100vw !important;
+				height: 100vh !important;
+				display: block !important;
+				visibility: visible !important;
+				opacity: 1 !important;
+				z-index: 999999 !important;
+				pointer-events: none !important;
+				font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+				-webkit-transform: translateZ(0) !important;
+				transform: translateZ(0) !important;
+			}
+			
+			#info-panel {
+				position: absolute !important;
+				top: 20px !important;
+				left: 20px !important;
+				max-width: 420px !important;
+				background: rgba(16, 16, 24, 0.95) !important;
+				backdrop-filter: blur(20px) !important;
+				-webkit-backdrop-filter: blur(20px) !important;
+				border: 1px solid rgba(0, 255, 136, 0.5) !important;
+				border-radius: 16px !important;
+				padding: 24px !important;
+				pointer-events: auto !important;
+				display: block !important;
+				visibility: visible !important;
+				opacity: 1 !important;
+				box-shadow: 
+					0 8px 32px rgba(0, 0, 0, 0.5),
+					0 0 20px rgba(0, 255, 136, 0.3),
+					inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+				animation: neonPulse 3s ease-in-out infinite alternate !important;
+			}
+			
+			#info-panel:hover {
+				transform: translateY(-2px) !important;
+				box-shadow: 
+					0 12px 40px rgba(0, 0, 0, 0.6),
+					0 0 30px rgba(0, 255, 136, 0.5),
+					0 0 60px rgba(0, 204, 255, 0.2),
+					inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+				border-color: rgba(0, 255, 136, 0.8) !important;
+			}
+			
+			@keyframes neonPulse {
+				0% {
+					box-shadow: 
+						0 8px 32px rgba(0, 0, 0, 0.5),
+						0 0 20px rgba(0, 255, 136, 0.3),
+						inset 0 1px 0 rgba(255, 255, 255, 0.1);
+					border-color: rgba(0, 255, 136, 0.5);
+				}
+				100% {
+					box-shadow: 
+						0 8px 32px rgba(0, 0, 0, 0.5),
+						0 0 30px rgba(0, 255, 136, 0.6),
+						0 0 50px rgba(0, 204, 255, 0.3),
+						inset 0 1px 0 rgba(255, 255, 255, 0.1);
+					border-color: rgba(0, 255, 136, 0.7);
+				}
+			}
+			
+			#status-bar {
+				position: absolute !important;
+				bottom: 20px !important;
+				left: 20px !important;
+				right: 20px !important;
+				display: flex !important;
+				justify-content: space-between !important;
+				align-items: center !important;
+				background: rgba(16, 16, 24, 0.9) !important;
+				backdrop-filter: blur(10px) !important;
+				-webkit-backdrop-filter: blur(10px) !important;
+				border: 1px solid rgba(0, 255, 136, 0.4) !important;
+				border-radius: 12px !important;
+				padding: 12px 20px !important;
+				pointer-events: auto !important;
+				box-shadow: 
+					0 4px 20px rgba(0, 0, 0, 0.3),
+					0 0 15px rgba(0, 255, 136, 0.2) !important;
+				visibility: visible !important;
+				opacity: 1 !important;
+				animation: statusGlow 4s ease-in-out infinite alternate !important;
+			}
+			
+			@keyframes statusGlow {
+				0% {
+					box-shadow: 
+						0 4px 20px rgba(0, 0, 0, 0.3),
+						0 0 15px rgba(0, 255, 136, 0.2);
+					border-color: rgba(0, 255, 136, 0.4);
+				}
+				100% {
+					box-shadow: 
+						0 4px 20px rgba(0, 0, 0, 0.3),
+						0 0 25px rgba(0, 255, 136, 0.4),
+						0 0 40px rgba(0, 204, 255, 0.2);
+					border-color: rgba(0, 255, 136, 0.6);
+				}
+			}
+			
+			/* Neon text effects */
+			.panel-header h1 {
+				background: linear-gradient(135deg, #00ff88, #00ccff) !important;
+				-webkit-background-clip: text !important;
+				-webkit-text-fill-color: transparent !important;
+				background-clip: text !important;
+				text-shadow: 0 0 10px rgba(0, 255, 136, 0.5) !important;
+				animation: textGlow 2s ease-in-out infinite alternate !important;
+			}
+			
+			@keyframes textGlow {
+				0% {
+					text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+				}
+				100% {
+					text-shadow: 
+						0 0 20px rgba(0, 255, 136, 0.8),
+						0 0 30px rgba(0, 204, 255, 0.5);
+				}
+			}
+			
+			.status-dot {
+				width: 8px !important;
+				height: 8px !important;
+				border-radius: 50% !important;
+				background: #00ff88 !important;
+				animation: dotPulse 2s infinite !important;
+				box-shadow: 0 0 10px rgba(0, 255, 136, 0.8) !important;
+			}
+			
+			@keyframes dotPulse {
+				0%, 100% {
+					opacity: 1;
+					box-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+				}
+				50% {
+					opacity: 0.5;
+					box-shadow: 0 0 20px rgba(0, 255, 136, 1);
+				}
 			}
 		</style>
 	</head>
@@ -122,34 +274,68 @@
 		
 		<!-- Fallback to hide loading screen if JavaScript fails -->
 		<script>
-			// Simple fallback to hide loading screen after 5 seconds
+			function forceOverlayVisible() {
+				const uiOverlay = document.getElementById('ui-overlay');
+				const infoPanel = document.getElementById('info-panel');
+				const statusBar = document.getElementById('status-bar');
+				
+				if (uiOverlay) {
+					const overlayStyles = {
+						'position': 'fixed',
+						'top': '0',
+						'left': '0',
+						'right': '0',
+						'bottom': '0',
+						'width': '100vw',
+						'height': '100vh',
+						'display': 'block',
+						'visibility': 'visible',
+						'opacity': '1',
+						'z-index': '999999',
+						'pointer-events': 'none'
+					};
+					
+					Object.keys(overlayStyles).forEach(prop => {
+						uiOverlay.style.setProperty(prop, overlayStyles[prop], 'important');
+					});
+				}
+				
+				if (infoPanel) {
+					infoPanel.style.setProperty('display', 'block', 'important');
+					infoPanel.style.setProperty('visibility', 'visible', 'important');
+					infoPanel.style.setProperty('opacity', '1', 'important');
+					infoPanel.style.setProperty('pointer-events', 'auto', 'important');
+				}
+				
+				if (statusBar) {
+					statusBar.style.setProperty('display', 'flex', 'important');
+					statusBar.style.setProperty('visibility', 'visible', 'important');
+					statusBar.style.setProperty('opacity', '1', 'important');
+					statusBar.style.setProperty('pointer-events', 'auto', 'important');
+				}
+			}
+			
+			// Run immediately when DOM is ready
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', forceOverlayVisible);
+			} else {
+				forceOverlayVisible();
+			}
+			
+			// Run after a short delay
+			setTimeout(forceOverlayVisible, 100);
+			setTimeout(forceOverlayVisible, 500);
+			setTimeout(forceOverlayVisible, 1000);
+			setTimeout(forceOverlayVisible, 2000);
+			
+			// Simple fallback to hide loading screen after 3 seconds
 			setTimeout(() => {
 				const loadingScreen = document.getElementById('loading-screen');
-				const uiOverlay = document.getElementById('ui-overlay');
 				if (loadingScreen && loadingScreen.style.display !== 'none') {
-					console.log('Fallback: hiding loading screen');
 					loadingScreen.style.display = 'none';
 				}
-				if (uiOverlay) {
-					console.log('Fallback: ensuring UI overlay is visible');
-					uiOverlay.style.display = 'block';
-					uiOverlay.style.visibility = 'visible';
-					uiOverlay.style.opacity = '1';
-					uiOverlay.style.zIndex = '1000';
-				}
+				forceOverlayVisible();
 			}, 3000);
-			
-			// Additional immediate check
-			document.addEventListener('DOMContentLoaded', () => {
-				console.log('DOM loaded, checking overlay...');
-				const uiOverlay = document.getElementById('ui-overlay');
-				if (uiOverlay) {
-					uiOverlay.style.display = 'block';
-					uiOverlay.style.visibility = 'visible';
-					uiOverlay.style.opacity = '1';
-					console.log('UI overlay forced visible on DOM load');
-				}
-			});
 		</script>
 	</body>
 </html>
