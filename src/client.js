@@ -2,7 +2,7 @@ import * as THREE from "three";
 
 import { BoxLineGeometry } from "three/addons/geometries/BoxLineGeometry.js";
 import { XRButton } from "three/addons/webxr/XRButton.js";
-import { ARButton } from "/ARButton.js";
+import { ARButton } from "/js/ARButton.js";
 import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
@@ -253,8 +253,28 @@ class XRPlanes extends Object3D {
   }
 }
 
-init();
-await initPhysics();
+async function startApp() {
+  init();
+  console.log("Starting physics initialization...");
+  await initPhysics();
+  console.log("Physics initialized successfully");
+}
+
+// Start the application
+startApp().catch(error => {
+  console.error("Failed to start application:", error);
+  // Hide loading screen even if there's an error
+  setTimeout(() => {
+    const loadingScreen = document.getElementById('loading-screen');
+    const uiOverlay = document.getElementById('ui-overlay');
+    if (loadingScreen) {
+      loadingScreen.style.display = 'none';
+    }
+    if (uiOverlay) {
+      uiOverlay.style.display = 'block';
+    }
+  }, 1000);
+});
 
 ///////////////////////////////
 //  Start init() for scene  //
@@ -338,8 +358,14 @@ function init() {
     planes = new XRPlanes(renderer);
     planeGroup.add(planes);
     hideLoadingScreen();
+    updateXRStatus('immersive');
     //physics.addMesh(controllerGrip1);
     //physics.addMesh(controllerGrip2);
+  });
+
+  renderer.xr.addEventListener("sessionend", function (event) {
+    updateXRStatus('desktop');
+    console.log('XR session ended');
   });
 
   //
@@ -467,10 +493,11 @@ function init() {
   
   // Hide loading screen once 3D scene is ready
   setTimeout(() => {
-    if (!renderer?.xr?.isPresenting) {
-      hideLoadingScreen();
-    }
-  }, 1500);
+    hideLoadingScreen();
+    // Initialize UI status
+    updateXRStatus('desktop');
+    updateMeshCount(0);
+  }, 2000);
 }
 
 ///////////////////////////
@@ -1922,15 +1949,25 @@ function hideLoadingScreen() {
   const loadingScreen = document.getElementById('loading-screen');
   const uiOverlay = document.getElementById('ui-overlay');
   
+  console.log('hideLoadingScreen called');
+  console.log('Loading screen element:', loadingScreen);
+  console.log('UI overlay element:', uiOverlay);
+  
   if (loadingScreen) {
     loadingScreen.classList.add('fade-out');
     setTimeout(() => {
       loadingScreen.style.display = 'none';
+      console.log('Loading screen hidden');
     }, 1000);
   }
   
   if (uiOverlay) {
     uiOverlay.style.display = 'block';
+    uiOverlay.style.visibility = 'visible';
+    uiOverlay.style.opacity = '1';
+    console.log('UI overlay should now be visible');
+  } else {
+    console.error('UI overlay element not found!');
   }
 }
 
@@ -1952,17 +1989,51 @@ function updateConnectionStatus(connected) {
 function updateMeshCount(count) {
   const meshCountElement = document.getElementById('mesh-count');
   if (meshCountElement) {
-    meshCountElement.textContent = `📊 Meshes: ${count}`;
+    meshCountElement.innerHTML = `<span class="mesh-icon">📊</span> Meshes: ${count}`;
   }
 }
 
-// Initialize UI once DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  // Hide loading screen after a short delay if WebXR is not supported
-  setTimeout(() => {
-    const loadingScreen = document.getElementById('loading-screen');
-    if (loadingScreen && !renderer?.xr?.isPresenting) {
-      hideLoadingScreen();
-    }
-  }, 3000); // Wait 3 seconds then show UI regardless
-});
+function updateXRStatus(status) {
+  const xrStatusElement = document.getElementById('xr-status');
+  if (xrStatusElement) {
+    const icons = {
+      'desktop': '🖥️',
+      'vr': '🥽',
+      'ar': '📱',
+      'immersive': '🌐'
+    };
+    const icon = icons[status] || '🖥️';
+    const text = status.charAt(0).toUpperCase() + status.slice(1) + ' Mode';
+    xrStatusElement.innerHTML = `<span class="xr-icon">${icon}</span> ${text}`;
+  }
+}
+
+function startXRSession() {
+  if (navigator.xr) {
+    // Try to start an immersive VR session
+    navigator.xr.requestSession('immersive-vr').then((session) => {
+      renderer.xr.setSession(session);
+      updateXRStatus('vr');
+      console.log('VR session started');
+    }).catch(() => {
+      // If VR fails, try AR
+      navigator.xr.requestSession('immersive-ar').then((session) => {
+        renderer.xr.setSession(session);
+        updateXRStatus('ar');
+        console.log('AR session started');
+      }).catch((error) => {
+        console.log('XR not available:', error);
+        alert('VR/AR not supported on this device. Use a VR headset or AR-compatible device.');
+      });
+    });
+  } else {
+    alert('WebXR is not supported in this browser. Try using a VR headset or updated browser.');
+  }
+}
+
+// Make functions globally available
+window.startXRSession = startXRSession;
+window.exportScene = exportScene;
+window.toggleInfoPanel = toggleInfoPanel;
+
+// ...existing code...

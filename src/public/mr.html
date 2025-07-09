@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<meta char				<span id="connection-status">🔗 Connected</span>et="utf-8">
+		<meta charset="utf-8">
 		<title>Mixed Reality Robot Programming Platform</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 		<meta name="mobile-web-app-capable" content="yes">
@@ -28,31 +28,84 @@
 		</section>
 
 		<!-- WebXR UI overlay -->
-		<div id="ui-overlay" style="display: none;">
+		<div id="ui-overlay" style="display: block;">
 			<div id="info-panel" onclick="toggleInfoPanel()">
-				<h1>🤖 Robot Configuration Platform 🥽</h1>
-				<h2>📡 ROOM SCAN & ROBOT SETUP 📡</h2>
-				<p>Mixed reality interface for instant mobile robot programming</p>
+				<div class="panel-header">
+					<h1>🤖 Robot Configuration Platform 🥽</h1>
+					<h2>📡 ROOM SCAN & ROBOT SETUP 📡</h2>
+					<p class="tagline">Mixed reality interface for instant mobile robot programming</p>
+				</div>
 				
 				<div class="steps">
-					<h3>✅ Step 1: Scan Your Environment</h3>
-					<p>Use your MR headset to scan the facility</p>
+					<div class="step">
+						<h3><span class="step-icon">🔍</span> Step 1: Scan Your Environment</h3>
+						<p>Use your MR headset to scan the facility and capture 3D mesh data</p>
+					</div>
 					
-					<h3>✅ Step 2: Configure Robot Paths</h3>
-					<p>Point and click to set waypoints</p>
+					<div class="step">
+						<h3><span class="step-icon">🎯</span> Step 2: Configure Robot Paths</h3>
+						<p>Point and click to set waypoints and define navigation paths</p>
+					</div>
 					
-					<h3>✅ Step 3: Deploy Instantly</h3>
-					<p>Robot ready in minutes</p>
+					<div class="step">
+						<h3><span class="step-icon">🚀</span> Step 3: Deploy Instantly</h3>
+						<p>Export to URDF and deploy - robot ready in minutes</p>
+					</div>
 				</div>
 				
 				<div class="controls">
-					<p><strong>Controls:</strong> Trigger = Test AR, X = Toggle environment, Y = Export to server</p>
+					<h4>🎮 Controls</h4>
+					<div class="control-grid">
+						<div class="control-item">
+							<span class="control-key">Trigger</span>
+							<span class="control-desc">Test AR Mode</span>
+						</div>
+						<div class="control-item">
+							<span class="control-key">X Button</span>
+							<span class="control-desc">Toggle Environment</span>
+						</div>
+						<div class="control-item">
+							<span class="control-key">Y Button</span>
+							<span class="control-desc">Export to Server</span>
+						</div>
+						<div class="control-item">
+							<span class="control-key">Mouse</span>
+							<span class="control-desc">Orbit Camera</span>
+						</div>
+					</div>
+				</div>
+				
+				<div class="action-buttons">
+					<button class="btn btn-primary" onclick="startXRSession()">
+						<span class="btn-icon">🥽</span>
+						Enter VR/AR
+					</button>
+					<button class="btn btn-secondary" onclick="exportScene()">
+						<span class="btn-icon">💾</span>
+						Export Scene
+					</button>
 				</div>
 			</div>
 			
 			<div id="status-bar">
-				<span id="connection-status">� Connected</span>
-				<span id="mesh-count">📊 Meshes: 0</span>
+				<div class="status-item">
+					<span id="connection-status" class="status-indicator">
+						<span class="status-dot"></span>
+						Connected
+					</span>
+				</div>
+				<div class="status-item">
+					<span id="mesh-count">
+						<span class="mesh-icon">📊</span>
+						Meshes: 0
+					</span>
+				</div>
+				<div class="status-item">
+					<span id="xr-status">
+						<span class="xr-icon">🥽</span>
+						Desktop Mode
+					</span>
+				</div>
 			</div>
 		</div>
 		
@@ -66,5 +119,37 @@
 		</script>				
 		<script src="/socket.io/socket.io.js"></script>
 		<script type="module" src="/client.js"></script>
+		
+		<!-- Fallback to hide loading screen if JavaScript fails -->
+		<script>
+			// Simple fallback to hide loading screen after 5 seconds
+			setTimeout(() => {
+				const loadingScreen = document.getElementById('loading-screen');
+				const uiOverlay = document.getElementById('ui-overlay');
+				if (loadingScreen && loadingScreen.style.display !== 'none') {
+					console.log('Fallback: hiding loading screen');
+					loadingScreen.style.display = 'none';
+				}
+				if (uiOverlay) {
+					console.log('Fallback: ensuring UI overlay is visible');
+					uiOverlay.style.display = 'block';
+					uiOverlay.style.visibility = 'visible';
+					uiOverlay.style.opacity = '1';
+					uiOverlay.style.zIndex = '1000';
+				}
+			}, 3000);
+			
+			// Additional immediate check
+			document.addEventListener('DOMContentLoaded', () => {
+				console.log('DOM loaded, checking overlay...');
+				const uiOverlay = document.getElementById('ui-overlay');
+				if (uiOverlay) {
+					uiOverlay.style.display = 'block';
+					uiOverlay.style.visibility = 'visible';
+					uiOverlay.style.opacity = '1';
+					console.log('UI overlay forced visible on DOM load');
+				}
+			});
+		</script>
 	</body>
 </html>
